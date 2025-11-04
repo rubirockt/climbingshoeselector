@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 
-# --- 1. DATEN-SETUP (Skaliert auf 1.0 - 10.0 mit Gruppeninformation) ---
+# --- 1. DATEN-SETUP (83 Modelle) ---
 
 # --- LA SPORTIVA DATEN (37 Modelle) ---
 la_sportiva_modelle = [
@@ -48,77 +48,52 @@ la_sportiva_volumen_z = [
 
 la_sportiva_toe = ['N/A'] * 37
 
-
 # --- SCARPA DATEN (46 Modelle) ---
-scarpa_modelle_base = [
+scarpa_modelle = [
     'Mago', 'Booster', 'Drago', 'Drago LV', 'Chimera', 'Furia Air', 'Instinct S', 'Instinct VS', 'Instinct VSR', 'Instinct Wmn', 
     'Instinct VS Wmn', 'Force', 'Force Wmn', 'Helix', 'Helix Wmn', 'Origin', 'Origin Wmn', 'Origin VS', 'Origin VS Wmn', 
     'Reflex - Y', 'Reflex VS', 'Reflex VS Wmn', 'Pik! - Y', 'Veloce', 'Veloce L', 'Veloce Wmn', 'Veloce L Wmn', 
     'Generator', 'Generator Mid', 'Generator Wmn', 'Generator Mid Wmn', 'Vapor S', 'Vapor S Wmn', 'Vapor V', 
     'Vapor V LV', # UMBENANNT: War Vapor V Wmn
-    'Arpia V', 'Arpia V Wmn'
+    'Arpia V', 'Arpia V Wmn',
+    'Vapor', 'Vapor WMN', 'Generator V', 'Generator V WMN', 'Boostic', 'Boostic R', 'Drago - Y', 'Drago XT', 'Instinct VSR LV', 'Instinct'
 ]
 
-scarpa_support_x_base = [
+scarpa_support_x = [
     6.5, 4.0, 2.0, 2.0, 4.0, 2.0, 6.5, 6.5, 4.0, 4.0,
     4.0, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 4.0, 4.0, 
     4.0, 6.5, 6.5, 4.0, 2.0, 6.5, 2.0, 6.5, 
     9.0, 9.0, 9.0, 9.0, 6.5, 6.5, 6.5, 6.5, 
-    6.5, 6.5
+    6.5, 6.5,
+    9.0, 9.0, 9.0, 9.0, 6.5, 9.0, 2.0, 4.0, 4.0, 6.5
 ]
 
-scarpa_performance_y_base = [
+scarpa_performance_y = [
     8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5,
     8.5, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 
     5.0, 5.0, 5.0, 5.5, 5.0, 5.0, 5.0, 5.0, 
     8.5, 8.5, 8.5, 8.5, 9.0, 9.0, 9.0, 9.0, 
-    5.5, 5.5
+    5.5, 5.5,
+    5.5, 5.5, 5.0, 5.0, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5
 ]
 
-scarpa_volumen_z_base = [
+scarpa_volumen_z = [
     5.5, 5.5, 3.0, 3.0, 3.0, 3.0, 5.5, 8.0, 8.0, 5.5,
     5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 
     5.5, 5.5, 5.5, 5.5, 8.0, 8.0, 8.0, 8.0, 
     5.0, 5.0, 5.0, 5.0, 3.0, 3.0, 3.0, 3.0, 
-    8.0, 5.5
+    8.0, 5.5,
+    3.0, 3.0, 5.5, 5.5, 5.5, 5.5, 3.0, 3.0, 3.0, 8.0
 ]
 
-scarpa_toe_base = [
+scarpa_toe = [
     'Classic', 'Classic', 'Classic', 'Classic', 'Classic', 'Classic', 'Centre', 'Centre', 'Centre', 'Centre',
     'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 
     'Centre', 'Centre', 'Centre', 'Centre', 'Square', 'Square', 'Square', 'Square',
     'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 
-    'Centre', 'Centre', 'Centre'
-]
-
-# --- NEUE SCARPA MODELLE (9 Stück) ---
-scarpa_modelle_neu = [
-    'Vapor', 'Vapor WMN', 'Generator V', 'Generator V WMN', 'Boostic', 'Boostic R', 'Drago - Y', 'Drago XT', 'Instinct VSR LV', 'Instinct'
-]
-
-scarpa_support_x_neu = [
-    9.0, 9.0, 9.0, 9.0, 6.5, 9.0, 2.0, 4.0, 4.0, 6.5
-]
-
-scarpa_performance_y_neu = [
-    5.5, 5.5, 5.0, 5.0, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5
-]
-
-scarpa_volumen_z_neu = [
-    3.0, 3.0, 5.5, 5.5, 5.5, 5.5, 3.0, 3.0, 3.0, 8.0
-]
-
-scarpa_toe_neu = [
+    'Centre', 'Centre', 'Centre',
     'Centre', 'Centre', 'Centre', 'Centre', 'Classic', 'Classic', 'Classic', 'Classic', 'Centre', 'Centre'
 ]
-
-# Füge die neuen Modelle in die Basislisten ein.
-scarpa_modelle = scarpa_modelle_base + scarpa_modelle_neu
-scarpa_support_x = scarpa_support_x_base + scarpa_support_x_neu
-scarpa_performance_y = scarpa_performance_y_base + scarpa_performance_y_neu
-scarpa_volumen_z = scarpa_volumen_z_base + scarpa_volumen_z_neu
-scarpa_toe = scarpa_toe_base + scarpa_toe_neu
-
 
 # --- ZUSAMMENFÜHRUNG DER GESAMTEN DATEN ---
 data = {
@@ -163,83 +138,15 @@ achsen_ticks_3d = {
     'Volumen_Z': {1: 'Min Vol (1.0)', 5: 'Mittel', 10: 'Max Vol (10.0)'}
 }
 
-
-# --- 2. LAYOUT-ERSTELLUNG (Toe-Filter entfernt) ---
-app = dash.Dash(__name__)
-server = app.server
-
-app.layout = html.Div(
-    style={'backgroundColor': '#f9f9f9', 'padding': '20px'},
-    children=[
-        html.H1("🧗 Kletterschuh-Analyse (3D-XYZ-Plot)", style={'textAlign': 'center', 'color': '#333'}),
-        html.P("Visualisierung mit allen Achsen auf den Bereich 1.0 bis 10.0 skaliert. Slider-Auflösung: 0.1",
-               style={'textAlign': 'center', 'color': '#555'}),
-
-        dcc.Graph(id='kletterschuh-3d-plot', style={'height': '650px', 'margin-bottom': '20px'}),
-
-        html.Div(
-            style={'display': 'flex', 'flex-direction': 'column', 'gap': '30px', 'padding': '20px', 'border-top': '1px solid #ddd'},
-            children=[
-                # --- Slider X-Achse (Support) ---
-                html.Div([
-                    html.Label(f'Filter X-Achse: {achsen_namen["Support_X"]}', style={'fontWeight': 'bold'}),
-                    dcc.RangeSlider(
-                        id='x-range-slider',
-                        min=MIN_VAL, max=MAX_VAL, 
-                        step=0.1, 
-                        marks=slider_support_labels, 
-                        value=[MIN_VAL, MAX_VAL]
-                    ),
-                ]),
-
-                # --- Slider Y-Achse (Performance) ---
-                html.Div([
-                    html.Label(f'Filter Y-Achse: {achsen_namen["Performance_Y"]}', style={'fontWeight': 'bold'}),
-                    dcc.RangeSlider(
-                        id='y-range-slider',
-                        min=MIN_VAL, max=MAX_VAL, 
-                        step=0.1, 
-                        marks=slider_performance_labels, 
-                        value=[MIN_VAL, MAX_VAL]
-                    ),
-                ]),
-
-                # --- Slider Z-Achse (Volumen) ---
-                html.Div([
-                    html.Label(f'Filter Z-Achse: {achsen_namen["Volumen_Z"]}', style={'fontWeight': 'bold'}),
-                    dcc.RangeSlider(
-                        id='z-range-slider',
-                        min=MIN_VAL, max=MAX_VAL, 
-                        step=0.1, 
-                        marks=slider_volumen_labels, 
-                        value=[MIN_VAL, MAX_VAL]
-                    ),
-                ]),
-            ]
-        )
-    ]
-)
-
-# --- 3. CALLBACKS (Logik angepasst) ---
-@app.callback(
-    Output('kletterschuh-3d-plot', 'figure'),
-    [Input('x-range-slider', 'value'),
-     Input('y-range-slider', 'value'),
-     Input('z-range-slider', 'value')]
-)
-def update_graph(x_range, y_range, z_range):
-    # 1. Daten filtern (nur X, Y, Z)
-    filtered_df = df[
-        (df['Support_X'] >= x_range[0]) & (df['Support_X'] <= x_range[1]) &
-        (df['Performance_Y'] >= y_range[0]) & (df['Performance_Y'] <= y_range[1]) &
-        (df['Volumen_Z'] >= z_range[0]) & (df['Volumen_Z'] <= z_range[1])
-    ]
-
-    fig = go.Figure()
+# --- 2. HILFSFUNKTION FÜR DIE ERSTELLUNG DER 3D-FIGUR ---
+def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
+    """Erstellt eine Plotly 3D-Scatter-Figur basierend auf dem Haupt- und dem gefilterten DataFrame."""
     
-    # 2. Plotten der Basis-Punkte
-    for group_name in df['Gruppe'].unique():
-        df_group = df[df['Gruppe'] == group_name]
+    fig = go.Figure()
+
+    # 2.1 Plotten der Basis-Punkte (alle, leicht transparent)
+    for group_name in dataframe['Gruppe'].unique():
+        df_group = dataframe[dataframe['Gruppe'] == group_name]
         group_color = GRUPPEN_FARBEN.get(group_name, 'gray')
 
         # Erstellung des Hover-Textes (OHNE 'Toe')
@@ -263,20 +170,20 @@ def update_graph(x_range, y_range, z_range):
             hovertext=hover_texts
         ))
 
-    # 3. Plotten der GEFILTERTEN Punkte (Highlighted)
+    # 2.2 Plotten der GEFILTERTEN Punkte (Highlighted, Rot, Opacity 1.0)
     highlight_hover_texts = [
         f"Schuh: {row['Schuhmodell']} (Gefiltert)<br>"
         f"Hersteller: {row['Gruppe']}<br>"
         f"Support (X): {row['Support_X']}<br>"
         f"Performance (Y): {row['Performance_Y']}<br>"
         f"Volumen (Z): {row['Volumen_Z']}"
-        for index, row in filtered_df.iterrows()
+        for index, row in filtered_dataframe.iterrows()
     ]
 
     fig.add_trace(go.Scatter3d(
-        x=filtered_df['Support_X'],
-        y=filtered_df['Performance_Y'],
-        z=filtered_df['Volumen_Z'],
+        x=filtered_dataframe['Support_X'],
+        y=filtered_dataframe['Performance_Y'],
+        z=filtered_dataframe['Volumen_Z'],
         mode='markers',
         marker=dict(size=10, color='red', opacity=1.0),
         name='Gefiltert/Hervorgehoben',
@@ -285,9 +192,9 @@ def update_graph(x_range, y_range, z_range):
         hovertext=highlight_hover_texts
     ))
     
-    # 4. Permanentes Hinzufügen der Schuhnamen als Annotationen (nur für gefilterte)
+    # 2.3 Permanentes Hinzufügen der Schuhnamen als Annotationen (nur für gefilterte)
     annotations = []
-    for index, row in filtered_df.iterrows():
+    for index, row in filtered_dataframe.iterrows():
         annotations.append(
             dict(
                 showarrow=False,
@@ -301,7 +208,7 @@ def update_graph(x_range, y_range, z_range):
             )
         )
     
-    # 5. Layout konfigurieren
+    # 2.4 Layout konfigurieren
     fig.update_layout(
         margin=dict(l=0, r=0, b=0, t=0),
         scene=dict(
@@ -342,8 +249,100 @@ def update_graph(x_range, y_range, z_range):
         ),
         showlegend=True
     )
-
     return fig
+
+# --- 3. DASH LAYOUT ERSTELLUNG ---
+app = dash.Dash(__name__)
+server = app.server
+
+# Standardwerte für die Slider
+default_x_range = [MIN_VAL, MAX_VAL]
+default_y_range = [MIN_VAL, MAX_VAL]
+default_z_range = [MIN_VAL, MAX_VAL]
+
+# Initialisierung des gefilterten DataFrames für die Standard-Figur
+initial_filtered_df = df[
+    (df['Support_X'] >= default_x_range[0]) & (df['Support_X'] <= default_x_range[1]) &
+    (df['Performance_Y'] >= default_y_range[0]) & (df['Performance_Y'] <= default_y_range[1]) &
+    (df['Volumen_Z'] >= default_z_range[0]) & (df['Volumen_Z'] <= default_z_range[1])
+]
+
+# Erstelle die initiale 3D-Figur
+initial_figure = create_3d_figure(df, initial_filtered_df, default_x_range, default_y_range, default_z_range)
+
+app.layout = html.Div(
+    style={'backgroundColor': '#f9f9f9', 'padding': '20px'},
+    children=[
+        html.H1("🧗 Kletterschuh-Analyse (3D-XYZ-Plot)", style={'textAlign': 'center', 'color': '#333'}),
+        html.P("Visualisierung mit allen Achsen auf den Bereich 1.0 bis 10.0 skaliert. Slider-Auflösung: 0.1",
+               style={'textAlign': 'center', 'color': '#555'}),
+
+        dcc.Graph(
+            id='kletterschuh-3d-plot', 
+            figure=initial_figure, # HIER WIRD DIE INITIALE FIGUR GESETZT
+            style={'height': '650px', 'margin-bottom': '20px'}
+        ),
+
+        html.Div(
+            style={'display': 'flex', 'flex-direction': 'column', 'gap': '30px', 'padding': '20px', 'border-top': '1px solid #ddd'},
+            children=[
+                # --- Slider X-Achse (Support) ---
+                html.Div([
+                    html.Label(f'Filter X-Achse: {achsen_namen["Support_X"]}', style={'fontWeight': 'bold'}),
+                    dcc.RangeSlider(
+                        id='x-range-slider',
+                        min=MIN_VAL, max=MAX_VAL, 
+                        step=0.1, 
+                        marks=slider_support_labels, 
+                        value=default_x_range
+                    ),
+                ]),
+
+                # --- Slider Y-Achse (Performance) ---
+                html.Div([
+                    html.Label(f'Filter Y-Achse: {achsen_namen["Performance_Y"]}', style={'fontWeight': 'bold'}),
+                    dcc.RangeSlider(
+                        id='y-range-slider',
+                        min=MIN_VAL, max=MAX_VAL, 
+                        step=0.1, 
+                        marks=slider_performance_labels, 
+                        value=default_y_range
+                    ),
+                ]),
+
+                # --- Slider Z-Achse (Volumen) ---
+                html.Div([
+                    html.Label(f'Filter Z-Achse: {achsen_namen["Volumen_Z"]}', style={'fontWeight': 'bold'}),
+                    dcc.RangeSlider(
+                        id='z-range-slider',
+                        min=MIN_VAL, max=MAX_VAL, 
+                        step=0.1, 
+                        marks=slider_volumen_labels, 
+                        value=default_z_range
+                    ),
+                ]),
+            ]
+        )
+    ]
+)
+
+# --- 4. CALLBACKS ---
+@app.callback(
+    Output('kletterschuh-3d-plot', 'figure'),
+    [Input('x-range-slider', 'value'),
+     Input('y-range-slider', 'value'),
+     Input('z-range-slider', 'value')]
+)
+def update_graph(x_range, y_range, z_range):
+    # 1. Daten filtern (nur X, Y, Z)
+    filtered_df = df[
+        (df['Support_X'] >= x_range[0]) & (df['Support_X'] <= x_range[1]) &
+        (df['Performance_Y'] >= y_range[0]) & (df['Performance_Y'] <= y_range[1]) &
+        (df['Volumen_Z'] >= z_range[0]) & (df['Volumen_Z'] <= z_range[1])
+    ]
+
+    # 2. Erstellen und Rückgabe der Figur mit der Hilfsfunktion
+    return create_3d_figure(df, filtered_df, x_range, y_range, z_range)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
