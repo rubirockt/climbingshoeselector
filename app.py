@@ -33,7 +33,7 @@ la_sportiva_performance_y = [
     8.0, 9.5, 9.5, 
     9.8, 
     9.2, 5.0, 6.0, 4.0, 4.0,
-    5.8, 2.0, 2.0, 3.0, 4.8, 1.0, 1.0, 1.0, 1.0, 10.0,
+    5.8, 2.0, 2.0, 2.0, 4.8, 1.0, 1.0, 1.0, 1.0, 10.0,
     4.5, 1.4, 7.5, 7.2, 4.0, 7.0, 8.2
 ]
 
@@ -48,14 +48,15 @@ la_sportiva_volumen_z = [
 
 la_sportiva_toe = ['N/A'] * 37
 
-# --- SCARPA DATEN (46 Modelle) ---
+
+# --- SCARPA DATEN (ZUSAMMENGEFÜHRT, 46 Modelle) ---
 scarpa_modelle = [
     'Mago', 'Booster', 'Drago', 'Drago LV', 'Chimera', 'Furia Air', 'Instinct S', 'Instinct VS', 'Instinct VSR', 'Instinct Wmn', 
     'Instinct VS Wmn', 'Force', 'Force Wmn', 'Helix', 'Helix Wmn', 'Origin', 'Origin Wmn', 'Origin VS', 'Origin VS Wmn', 
     'Reflex - Y', 'Reflex VS', 'Reflex VS Wmn', 'Pik! - Y', 'Veloce', 'Veloce L', 'Veloce Wmn', 'Veloce L Wmn', 
     'Generator', 'Generator Mid', 'Generator Wmn', 'Generator Mid Wmn', 'Vapor S', 'Vapor S Wmn', 'Vapor V', 
-    'Vapor V LV', # UMBENANNT: War Vapor V Wmn
-    'Arpia V', 'Arpia V Wmn',
+    'Vapor V LV', 'Arpia V', 'Arpia V Wmn',
+    # NEUE MODELLE
     'Vapor', 'Vapor WMN', 'Generator V', 'Generator V WMN', 'Boostic', 'Boostic R', 'Drago - Y', 'Drago XT', 'Instinct VSR LV', 'Instinct'
 ]
 
@@ -65,6 +66,7 @@ scarpa_support_x = [
     4.0, 6.5, 6.5, 4.0, 2.0, 6.5, 2.0, 6.5, 
     9.0, 9.0, 9.0, 9.0, 6.5, 6.5, 6.5, 6.5, 
     6.5, 6.5,
+    # NEUE WERTE
     9.0, 9.0, 9.0, 9.0, 6.5, 9.0, 2.0, 4.0, 4.0, 6.5
 ]
 
@@ -74,6 +76,7 @@ scarpa_performance_y = [
     5.0, 5.0, 5.0, 5.5, 5.0, 5.0, 5.0, 5.0, 
     8.5, 8.5, 8.5, 8.5, 9.0, 9.0, 9.0, 9.0, 
     5.5, 5.5,
+    # NEUE WERTE
     5.5, 5.5, 5.0, 5.0, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5
 ]
 
@@ -83,6 +86,7 @@ scarpa_volumen_z = [
     5.5, 5.5, 5.5, 5.5, 8.0, 8.0, 8.0, 8.0, 
     5.0, 5.0, 5.0, 5.0, 3.0, 3.0, 3.0, 3.0, 
     8.0, 5.5,
+    # NEUE WERTE
     3.0, 3.0, 5.5, 5.5, 5.5, 5.5, 3.0, 3.0, 3.0, 8.0
 ]
 
@@ -92,8 +96,10 @@ scarpa_toe = [
     'Centre', 'Centre', 'Centre', 'Centre', 'Square', 'Square', 'Square', 'Square',
     'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 
     'Centre', 'Centre', 'Centre',
+    # NEUE WERTE
     'Centre', 'Centre', 'Centre', 'Centre', 'Classic', 'Classic', 'Classic', 'Classic', 'Centre', 'Centre'
 ]
+
 
 # --- ZUSAMMENFÜHRUNG DER GESAMTEN DATEN ---
 data = {
@@ -107,13 +113,13 @@ data = {
 
 df = pd.DataFrame(data)
 
-# --- GRUPPENFARBEN (SCARPA auf Schwarz geändert) ---
+# --- GRUPPENFARBEN (Scarpa ist Schwarz) ---
 GRUPPEN_FARBEN = {
     'La Sportiva': '#F1C31E', # Gelb/Orange
     'Scarpa': '#000000',     # Schwarz
 }
 
-# --- ACHSEN-CONFIG (Unverändert) ---
+# --- ACHSEN-CONFIG ---
 MIN_VAL, MAX_VAL = 1, 10
 AXIS_RANGE = [1, 10]
 
@@ -164,6 +170,7 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
             y=df_group['Performance_Y'],
             z=df_group['Volumen_Z'],
             mode='markers',
+            # SCARPA-Punkte sind Schwarz
             marker=dict(size=6, color=group_color, opacity=0.3),
             name=group_name,
             hoverinfo='text',
@@ -208,7 +215,7 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
             )
         )
     
-    # 2.4 Layout konfigurieren
+    # 2.4 Layout konfigurieren (Fehlerhafte 'standoff' entfernt)
     fig.update_layout(
         margin=dict(l=0, r=0, b=0, t=0),
         scene=dict(
@@ -216,7 +223,6 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
                 title=dict(
                     text=achsen_namen['Support_X'],
                     font=dict(size=14, color="#333"),
-                    standoff=40
                 ),
                 tickvals=list(achsen_ticks_3d['Support_X'].keys()),
                 ticktext=[achsen_ticks_3d['Support_X'].get(k, '') for k in range(MIN_VAL, MAX_VAL + 1)],
@@ -227,7 +233,6 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
                 title=dict(
                     text=achsen_namen['Performance_Y'],
                     font=dict(size=14, color="#333"),
-                    standoff=40
                 ),
                 tickvals=list(achsen_ticks_3d['Performance_Y'].keys()),
                 ticktext=[achsen_ticks_3d['Performance_Y'].get(k, '') for k in range(MIN_VAL, MAX_VAL + 1)],
@@ -238,7 +243,6 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
                 title=dict(
                     text=achsen_namen['Volumen_Z'],
                     font=dict(size=14, color="#333"),
-                    standoff=40
                 ),
                 tickvals=list(achsen_ticks_3d['Volumen_Z'].keys()),
                 ticktext=[achsen_ticks_3d['Volumen_Z'].get(k, '') for k in range(MIN_VAL, MAX_VAL + 1)],
@@ -267,7 +271,7 @@ initial_filtered_df = df[
     (df['Volumen_Z'] >= default_z_range[0]) & (df['Volumen_Z'] <= default_z_range[1])
 ]
 
-# Erstelle die initiale 3D-Figur
+# Erstelle die initiale 3D-Figur, um das Render.com/Gunicorn-Problem zu lösen
 initial_figure = create_3d_figure(df, initial_filtered_df, default_x_range, default_y_range, default_z_range)
 
 app.layout = html.Div(
@@ -279,7 +283,7 @@ app.layout = html.Div(
 
         dcc.Graph(
             id='kletterschuh-3d-plot', 
-            figure=initial_figure, # HIER WIRD DIE INITIALE FIGUR GESETZT
+            figure=initial_figure, 
             style={'height': '650px', 'margin-bottom': '20px'}
         ),
 
@@ -344,5 +348,6 @@ def update_graph(x_range, y_range, z_range):
     # 2. Erstellen und Rückgabe der Figur mit der Hilfsfunktion
     return create_3d_figure(df, filtered_df, x_range, y_range, z_range)
 
+# Lokales Starten (wird auf Render ignoriert)
 if __name__ == '__main__':
     app.run_server(debug=True)
