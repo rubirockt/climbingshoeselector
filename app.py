@@ -2,21 +2,45 @@ import dash
 from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output
-import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 
-# --- 1. DATEN-SETUP ---
-# Die drei orthogonalen Achsen sind:
-# X: Leistungsniveau (Performance)
-# Y: Fußvolumen (Volume)
-# Z: Steifigkeit/Support (Support)
+# --- 1. DATEN-SETUP (mit angepassten 1-10 Skalenwerten) ---
 
-# Daten der Kletterschuhe (simulierte Werte basierend auf der Analyse)
-# Skalen:
-# Performance (X): 1 (Anfänger) bis 10 (Pure Performance)
-# Volumen (Y): 1 (Narrow) bis 3 (Wide)
-# Support (Z): 1 (Super Soft) bis 4 (Max Support)
+# Skalen-Konfiguration für die 1-10 Achsen:
+# Die Achsen werden von 1 bis 10 skaliert.
+# Die Text-Labels werden nur an den relevanten Originalpunkten angezeigt.
+
+# X-Achse: Steifigkeit/Support
+# 1: Super Soft
+# 4: Soft
+# 7: Support
+# 10: Max Support
+support_ticks = {
+    1: 'Super Soft', 2: '', 3: '', 4: 'Soft', 5: '',
+    6: '', 7: 'Support', 8: '', 9: '', 10: 'Max Support'
+}
+
+# Y-Achse: Leistungsniveau (Performance)
+# 1: Kids'
+# 2: Introductory
+# 5: Progressive / All-Round
+# 8: Advanced / Performance
+# 10: Pure Performance
+performance_ticks = {
+    1: "Kids'", 2: 'Introductory', 3: '', 4: '', 5: 'Progressive / All-Round',
+    6: '', 7: '', 8: 'Advanced / Performance', 9: '', 10: 'Pure Performance'
+}
+
+# Z-Achse: Fußvolumen
+# 2: Narrow Volume
+# 5: Normal Volume
+# 8: Wide Volume
+volumen_ticks = {
+    1: '', 2: 'Narrow Volume', 3: '', 4: '', 5: 'Normal Volume',
+    6: '', 7: '', 8: 'Wide Volume', 9: '', 10: ''
+}
+
 
 data = {
     'Schuhmodell': [
@@ -25,84 +49,91 @@ data = {
         'Cobra Eco', 'Tarantulace', 'Tarantula', 'Aragon', 'Finale VS', 'Gekko', 'Stickit', 'Tarantula JR', 'Tarantula RN',
         'Miura XX'
     ],
-    'Performance_X': [
-        9, 9, 7, 8, 8, 8, 7, 10, 9, 10,  # Performance/Advanced
-        8, 8, 8, 10, 10, 9, 5, 6, 4, 4,  # Performance/Advanced/Progressive/All-Round
-        6, 2, 2, 3, 5, 1, 1, 1, 1, 10   # All-Round/Beginner/Introductory
+    # Achsen-Zuordnung: X=Support, Y=Performance, Z=Volumen
+    'Support_X': [
+        7, 4, 7, 10, 7, 4, 4, 4, 7, 4,
+        4, 4, 10, 7, 1, 10, 7, 7, 7, 7,
+        4, 7, 7, 7, 7, 1, 1, 7, 7, 10
     ],
-    'Volumen_Y': [
-        1, 2, 2, 2, 1, 2, 2, 2, 2, 2,
-        2, 2, 2, 3, 2, 3, 2, 2, 2, 2,
-        2, 2, 3, 3, 3, 2, 2, 2, 2, 1
+    'Performance_Y': [
+        8, 8, 5, 8, 8, 8, 5, 10, 8, 10,
+        5, 8, 8, 10, 10, 8, 5, 5, 5, 5,
+        5, 2, 2, 2, 5, 1, 1, 1, 1, 10
     ],
-    'Support_Z': [
-        3, 2, 3, 4, 3, 2, 2, 2, 3, 2,
-        2, 2, 4, 3, 1, 4, 3, 3, 3, 3,
-        2, 3, 3, 3, 3, 1, 1, 3, 3, 4
+    'Volumen_Z': [
+        2, 5, 5, 5, 2, 5, 5, 5, 5, 5,
+        5, 5, 5, 8, 5, 8, 5, 5, 5, 5,
+        5, 5, 8, 8, 8, 5, 5, 5, 5, 2
     ]
 }
 
 df = pd.DataFrame(data)
 
-# Achsenbeschriftungen
+# Finale Achsenbeschriftungen
 achsen_namen = {
-    'Performance_X': 'Leistungsniveau (X-Achse: 1=Anfänger, 10=Pro)',
-    'Volumen_Y': 'Fußvolumen (Y-Achse: 1=Schmal, 3=Breit)',
-    'Support_Z': 'Steifigkeit/Support (Z-Achse: 1=Soft, 4=Max Support)'
+    'Support_X': 'Steifigkeit/Support',
+    'Performance_Y': 'Leistungsniveau',
+    'Volumen_Z': 'Fußvolumen'
+}
+achsen_ticks = {
+    'Support_X': support_ticks,
+    'Performance_Y': performance_ticks,
+    'Volumen_Z': volumen_ticks
 }
 
-# --- 2. LAYOUT-ERSTELLUNG ---
-# Initialisiere die Dash-App
-app = dash.Dash(__name__)
-server = app.server # Wichtig für Gunicorn und Render.com
+# Skalenbereich
+AXIS_RANGE = [1, 10]
 
-# Maximale Werte für die Slider
-max_x, max_y, max_z = df['Performance_X'].max(), df['Volumen_Y'].max(), df['Support_Z'].max()
-min_x, min_y, min_z = df['Performance_X'].min(), df['Volumen_Y'].min(), df['Support_Z'].min()
+# --- 2. LAYOUT-ERSTELLUNG ---
+app = dash.Dash(__name__)
+server = app.server
+
+# Maximale und minimale Achsenwerte (jetzt immer 1 und 10)
+min_val, max_val = 1, 10
 
 app.layout = html.Div(
     style={'backgroundColor': '#f9f9f9', 'padding': '20px'},
     children=[
         html.H1("🧗 Kletterschuh-Analyse (3D-XYZ-Plot)", style={'textAlign': 'center', 'color': '#333'}),
-        html.P("Interaktive 3D-Visualisierung basierend auf Leistungsniveau (X), Fußvolumen (Y) und Support (Z).",
+        html.P("Interaktive 3D-Visualisierung mit Filterung und benutzerdefinierter Achsenskalierung.",
                style={'textAlign': 'center', 'color': '#555'}),
 
         # Container für 3D-Plot
-        dcc.Graph(id='kletterschuh-3d-plot', style={'height': '600px', 'margin-bottom': '20px'}),
+        dcc.Graph(id='kletterschuh-3d-plot', style={'height': '650px', 'margin-bottom': '20px'}),
 
         html.Div(
             style={'display': 'flex', 'flex-direction': 'column', 'gap': '30px', 'padding': '20px', 'border-top': '1px solid #ddd'},
             children=[
-                # --- Slider X-Achse (Performance) ---
+                # --- Slider X-Achse (Support) ---
                 html.Div([
-                    html.Label(f'Filter X-Achse: {achsen_namen["Performance_X"]}', style={'fontWeight': 'bold'}),
+                    html.Label(f'Filter X-Achse: {achsen_namen["Support_X"]}', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='x-range-slider',
-                        min=min_x, max=max_x, step=1,
-                        marks={i: str(i) for i in range(min_x, max_x + 1)},
-                        value=[min_x, max_x]
+                        min=min_val, max=max_val, step=1,
+                        marks={i: str(i) for i in range(min_val, max_val + 1)},
+                        value=[min_val, max_val]
                     ),
                 ]),
 
-                # --- Slider Y-Achse (Volumen) ---
+                # --- Slider Y-Achse (Performance) ---
                 html.Div([
-                    html.Label(f'Filter Y-Achse: {achsen_namen["Volumen_Y"]}', style={'fontWeight': 'bold'}),
+                    html.Label(f'Filter Y-Achse: {achsen_namen["Performance_Y"]}', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='y-range-slider',
-                        min=min_y, max=max_y, step=1,
-                        marks={i: str(i) for i in range(min_y, max_y + 1)},
-                        value=[min_y, max_y]
+                        min=min_val, max=max_val, step=1,
+                        marks={i: str(i) for i in range(min_val, max_val + 1)},
+                        value=[min_val, max_val]
                     ),
                 ]),
 
-                # --- Slider Z-Achse (Support) ---
+                # --- Slider Z-Achse (Volumen) ---
                 html.Div([
-                    html.Label(f'Filter Z-Achse: {achsen_namen["Support_Z"]}', style={'fontWeight': 'bold'}),
+                    html.Label(f'Filter Z-Achse: {achsen_namen["Volumen_Z"]}', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='z-range-slider',
-                        min=min_z, max=max_z, step=1,
-                        marks={i: str(i) for i in range(min_z, max_z + 1)},
-                        value=[min_z, max_z]
+                        min=min_val, max=max_val, step=1,
+                        marks={i: str(i) for i in range(min_val, max_val + 1)},
+                        value=[min_val, max_val]
                     ),
                 ]),
             ]
@@ -120,50 +151,80 @@ app.layout = html.Div(
 def update_graph(x_range, y_range, z_range):
     # 1. Daten filtern
     filtered_df = df[
-        (df['Performance_X'] >= x_range[0]) & (df['Performance_X'] <= x_range[1]) &
-        (df['Volumen_Y'] >= y_range[0]) & (df['Volumen_Y'] <= y_range[1]) &
-        (df['Support_Z'] >= z_range[0]) & (df['Support_Z'] <= z_range[1])
+        (df['Support_X'] >= x_range[0]) & (df['Support_X'] <= x_range[1]) &
+        (df['Performance_Y'] >= y_range[0]) & (df['Performance_Y'] <= y_range[1]) &
+        (df['Volumen_Z'] >= z_range[0]) & (df['Volumen_Z'] <= z_range[1])
     ]
 
     # 2. 3D-Plot erstellen
-    fig = go.Figure(
-        data=[
-            # Alle Schuhe (grau)
-            go.Scatter3d(
-                x=df['Performance_X'],
-                y=df['Volumen_Y'],
-                z=df['Support_Z'],
-                mode='markers',
-                marker=dict(size=6, color='lightgray', opacity=0.3),
-                name='Alle Schuhe',
-                hoverinfo='text',
-                hovertext=df['Schuhmodell']
-            ),
-            # Gefilterte/Highlighted Schuhe (farbig)
-            go.Scatter3d(
-                x=filtered_df['Performance_X'],
-                y=filtered_df['Volumen_Y'],
-                z=filtered_df['Support_Z'],
-                mode='markers',
-                marker=dict(size=10, color='red', opacity=1.0),
-                name='Gefilterte Schuhe',
-                hoverinfo='text',
-                hovertext=filtered_df['Schuhmodell']
-            )
-        ]
-    )
+    fig = go.Figure()
 
-    # 3. Layout konfigurieren (Rotierbar/Zoombar ist Standard in Scatter3d)
+    # Alle Schuhe (grau)
+    fig.add_trace(go.Scatter3d(
+        x=df['Support_X'],
+        y=df['Performance_Y'],
+        z=df['Volumen_Z'],
+        mode='markers',
+        marker=dict(size=6, color='lightgray', opacity=0.3),
+        name='Alle Schuhe',
+        hoverinfo='text',
+        hovertext=df['Schuhmodell']
+    ))
+
+    # Gefilterte/Highlighted Schuhe (farbig)
+    fig.add_trace(go.Scatter3d(
+        x=filtered_df['Support_X'],
+        y=filtered_df['Performance_Y'],
+        z=filtered_df['Volumen_Z'],
+        mode='markers',
+        marker=dict(size=10, color='red', opacity=1.0),
+        name='Gefilterte Schuhe',
+        hoverinfo='text',
+        hovertext=filtered_df['Schuhmodell']
+    ))
+    
+    # 3. Permanentes Hinzufügen der Schuhnamen als Annotationen (nur für gefilterte)
+    annotations = []
+    for index, row in filtered_df.iterrows():
+        annotations.append(
+            dict(
+                showarrow=False,
+                x=row['Support_X'],
+                y=row['Performance_Y'],
+                z=row['Volumen_Z'],
+                text=row['Schuhmodell'],
+                xanchor='left',
+                yanchor='bottom',
+                font=dict(color='darkred', size=9),
+            )
+        )
+    
+    # 4. Layout konfigurieren
     fig.update_layout(
         margin=dict(l=0, r=0, b=0, t=0),
         scene=dict(
-            xaxis_title=achsen_namen['Performance_X'],
-            yaxis_title=achsen_namen['Volumen_Y'],
-            zaxis_title=achsen_namen['Support_Z'],
-            # Feste Achsenbereiche für bessere Visualisierung beim Filtern
-            xaxis=dict(range=[0.5, 10.5]),
-            yaxis=dict(range=[0.5, 3.5]),
-            zaxis=dict(range=[0.5, 4.5]),
+            xaxis=dict(
+                title=achsen_namen['Support_X'],
+                tickvals=list(achsen_ticks['Support_X'].keys()),
+                ticktext=list(achsen_ticks['Support_X'].values()),
+                range=AXIS_RANGE,
+                nticks=10
+            ),
+            yaxis=dict(
+                title=achsen_namen['Performance_Y'],
+                tickvals=list(achsen_ticks['Performance_Y'].keys()),
+                ticktext=list(achsen_ticks['Performance_Y'].values()),
+                range=AXIS_RANGE,
+                nticks=10
+            ),
+            zaxis=dict(
+                title=achsen_namen['Volumen_Z'],
+                tickvals=list(achsen_ticks['Volumen_Z'].keys()),
+                ticktext=list(achsen_ticks['Volumen_Z'].values()),
+                range=AXIS_RANGE,
+                nticks=10
+            ),
+            annotations=annotations
         ),
         showlegend=True
     )
