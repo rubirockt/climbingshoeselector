@@ -56,7 +56,6 @@ scarpa_modelle = [
     'Reflex - Y', 'Reflex VS', 'Reflex VS Wmn', 'Pik! - Y', 'Veloce', 'Veloce L', 'Veloce Wmn', 'Veloce L Wmn', 
     'Generator', 'Generator Mid', 'Generator Wmn', 'Generator Mid Wmn', 'Vapor S', 'Vapor S Wmn', 'Vapor V', 
     'Vapor V LV', 'Arpia V', 'Arpia V Wmn',
-    # NEUE MODELLE
     'Vapor', 'Vapor WMN', 'Generator V', 'Generator V WMN', 'Boostic', 'Boostic R', 'Drago - Y', 'Drago XT', 'Instinct VSR LV', 'Instinct'
 ]
 
@@ -66,7 +65,6 @@ scarpa_support_x = [
     4.0, 6.5, 6.5, 4.0, 2.0, 6.5, 2.0, 6.5, 
     9.0, 9.0, 9.0, 9.0, 6.5, 6.5, 6.5, 6.5, 
     6.5, 6.5,
-    # NEUE WERTE
     9.0, 9.0, 9.0, 9.0, 6.5, 9.0, 2.0, 4.0, 4.0, 6.5
 ]
 
@@ -76,7 +74,6 @@ scarpa_performance_y = [
     5.0, 5.0, 5.0, 5.5, 5.0, 5.0, 5.0, 5.0, 
     8.5, 8.5, 8.5, 8.5, 9.0, 9.0, 9.0, 9.0, 
     5.5, 5.5,
-    # NEUE WERTE
     5.5, 5.5, 5.0, 5.0, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5
 ]
 
@@ -86,7 +83,6 @@ scarpa_volumen_z = [
     5.5, 5.5, 5.5, 5.5, 8.0, 8.0, 8.0, 8.0, 
     5.0, 5.0, 5.0, 5.0, 3.0, 3.0, 3.0, 3.0, 
     8.0, 5.5,
-    # NEUE WERTE
     3.0, 3.0, 5.5, 5.5, 5.5, 5.5, 3.0, 3.0, 3.0, 8.0
 ]
 
@@ -96,7 +92,6 @@ scarpa_toe = [
     'Centre', 'Centre', 'Centre', 'Centre', 'Square', 'Square', 'Square', 'Square',
     'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 
     'Centre', 'Centre', 'Centre',
-    # NEUE WERTE
     'Centre', 'Centre', 'Centre', 'Centre', 'Classic', 'Classic', 'Classic', 'Classic', 'Centre', 'Centre'
 ]
 
@@ -179,7 +174,7 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
 
     # 2.2 Plotten der GEFILTERTEN Punkte (Highlighted, Rot, Opacity 1.0)
     highlight_hover_texts = [
-        f"Schuh: {row['Schuhmodell']} (Gefiltert)<br>"
+        f"Schuh: {row['Schuhmodell']}<br>"
         f"Hersteller: {row['Gruppe']}<br>"
         f"Support (X): {row['Support_X']}<br>"
         f"Performance (Y): {row['Performance_Y']}<br>"
@@ -277,8 +272,8 @@ initial_figure = create_3d_figure(df, initial_filtered_df, default_x_range, defa
 app.layout = html.Div(
     style={'backgroundColor': '#f9f9f9', 'padding': '20px'},
     children=[
-        html.H1("🧗 Kletterschuh-Analyse (3D-XYZ-Plot)", style={'textAlign': 'center', 'color': '#333'}),
-        html.P("Visualisierung mit allen Achsen auf den Bereich 1.0 bis 10.0 skaliert. Slider-Auflösung: 0.1",
+        html.H1("🧗 Climbing Shoe Finder", style={'textAlign': 'center', 'color': '#333'}),
+        html.P("Match your foot & style",
                style={'textAlign': 'center', 'color': '#555'}),
 
         dcc.Graph(
@@ -292,7 +287,7 @@ app.layout = html.Div(
             children=[
                 # --- Slider X-Achse (Support) ---
                 html.Div([
-                    html.Label(f'Filter X-Achse: {achsen_namen["Support_X"]}', style={'fontWeight': 'bold'}),
+                    html.Label(f'Filter: {achsen_namen["Support_X"]}', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='x-range-slider',
                         min=MIN_VAL, max=MAX_VAL, 
@@ -304,7 +299,7 @@ app.layout = html.Div(
 
                 # --- Slider Y-Achse (Performance) ---
                 html.Div([
-                    html.Label(f'Filter Y-Achse: {achsen_namen["Performance_Y"]}', style={'fontWeight': 'bold'}),
+                    html.Label(f'Filter: {achsen_namen["Performance_Y"]}', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='y-range-slider',
                         min=MIN_VAL, max=MAX_VAL, 
@@ -316,7 +311,7 @@ app.layout = html.Div(
 
                 # --- Slider Z-Achse (Volumen) ---
                 html.Div([
-                    html.Label(f'Filter Z-Achse: {achsen_namen["Volumen_Z"]}', style={'fontWeight': 'bold'}),
+                    html.Label(f'Filter: {achsen_namen["Volumen_Z"]}', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='z-range-slider',
                         min=MIN_VAL, max=MAX_VAL, 
