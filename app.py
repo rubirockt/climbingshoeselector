@@ -6,148 +6,92 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 
-# --- 1. DATEN-SETUP (83 Modelle) ---
+# --- 1. DATEN-CONFIG ---
+DATA_DIR = 'data/'
+CLIMBING_SHOE_DATA_PATH = DATA_DIR + 'climbingshoedata.csv'
+MANUFACTURER_DATA_PATH = DATA_DIR + 'manufacturer.csv'
 
-# --- LA SPORTIVA DATEN (37 Modelle) ---
-la_sportiva_modelle = [
-    'Miura', 'Futura', 'Katana', 'Katana Laces', 'Kataki', 'Python', 'Cobra', 'Solution Comp', 'Solution', 'Theory',
-    'Cobra 4:99', 'Skwama', 'TC Pro', 'Testarossa', 
-    'Speedster', 
-    'Miura VS', 'Finale', 'Zenit', 'Mythos', 'Mythos Eco',
-    'Cobra Eco', 'Tarantulace', 'Tarantula', 'Aragon', 'Finale VS', 'Gekko', 'Stickit', 'Tarantula JR', 'Tarantula RN',
-    'Miura XX',
-    'Kubo', 'Tarantula Boulder', 'Mantra', 'Skwama Vegan', 'Mistral', 'Otaki', 'Genius'
-]
-
-la_sportiva_support_x = [
-    7.0, 4.0, 7.0, 10.0, 7.6, 5.5, 4.0, 4.6, 7.0, 4.0,
-    5.5, 4.0, 10.0, 8.5, 
-    1.0, 
-    10.0, 7.0, 7.0, 8.5, 8.5, # Mythos Eco: X unverändert
-    5.5, 7.0, 7.5, 7.0, 7.0, 0.5, 1.0, 7.0, 7.0, 10.0, # Tarantula (7.5) & Gekko (0.5) aktualisiert
-    4.5, 4.5, 1.0, 4.0, 5.5, 8.5, 4.3
-]
-
-la_sportiva_performance_y = [
-    8.0, 8.8, 5.0, 8.0, 7.8, 7.5, 5.5, 9.8, 9.0, 10.0,
-    7.0, 
-    8.0, 9.5, 9.5, 
-    9.8, 
-    9.2, 5.0, 6.0, 4.0, 4.2, # Mythos Eco: Performance +0.2 (von 4.0 auf 4.2)
-    5.8, 2.0, 2.0, 2.7, 4.8, 1.0, 1.0, 1.0, 1.0, 10.0, # Aragon (2.7) aktualisiert
-    4.5, 1.4, 7.5, 7.2, 4.0, 7.0, 8.2
-]
-
-la_sportiva_volumen_z = [
-    1.0, 5.5, 5.5, 5.5, 1.0, 6.4, 5.5, 5.5, 5.5, 5.5,
-    5.5, 5.5, 5.5, 10.0, 
-    5.5, 
-    10.0, 5.5, 5.5, 7.8, 7.6, # Mythos Eco: Volumen -0.2 (von 7.8 auf 7.6)
-    5.5, 7.8, 10.0, 10.0, 10.0, 5.5, 5.5, 7.8, 7.8, 1.0,
-    5.0, 7.0, 4.0, 6.5, 5.0, 5.5, 7.0
-]
-
-la_sportiva_toe = ['N/A'] * 37
+# Skalen-Grenzen für Robustheit
+MIN_VAL, MAX_VAL = 1.0, 10.0
 
 
-# --- SCARPA DATEN (ZUSAMMENGEFÜHRT, 46 Modelle) ---
-scarpa_modelle = [
-    'Mago', 'Booster', 'Drago', 'Drago LV', 'Chimera', 'Furia Air', 'Instinct S', 'Instinct VS', 'Instinct VSR', 'Instinct Wmn', 
-    'Instinct VS Wmn', 'Force', 'Force Wmn', 'Helix', 'Helix Wmn', 'Origin', 'Origin Wmn', 'Origin VS', 'Origin VS Wmn', 
-    'Reflex - Y', 'Reflex VS', 'Reflex VS Wmn', 'Pik! - Y', 'Veloce', 'Veloce L', 'Veloce Wmn', 'Veloce L Wmn', 
-    'Generator', 'Generator Mid', 'Generator Wmn', 'Generator Mid Wmn', 'Vapor S', 'Vapor S Wmn', 'Vapor V', 
-    'Vapor V LV', 'Arpia V', 'Arpia V Wmn',
-    'Vapor', 'Vapor WMN', 'Generator V', 'Generator V WMN', 'Boostic', 'Boostic R', 'Drago - Y', 'Drago XT', 'Instinct VSR LV', 'Instinct'
-]
+# --- 2. ROBUSTE HILFSFUNKTIONEN ZUM LADEN DER DATEN ---
 
-scarpa_support_x = [
-    6.5, 4.0, 2.0, 2.0, 4.0, 2.0, 6.5, 6.5, 4.0, 4.0,
-    4.0, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 4.0, 4.0, 
-    4.0, 6.5, 6.5, 4.0, 2.0, 6.5, 2.0, 6.5, 
-    8.6, # Generator: -0.4 (von 9.0 auf 8.6)
-    9.2, # Generator Mid: +0.2 (von 9.0 auf 9.2)
-    8.6, # Generator Wmn: -0.4 (von 9.0 auf 8.6)
-    9.2, # Generator Mid Wmn: +0.2 (von 9.0 auf 9.2)
-    6.5, 6.5, 6.5, 6.5, 
-    6.5, 6.5,
-    9.0, 9.0, 9.0, 9.0, 6.5, 9.0, 2.0, 4.0, 4.0, 6.5
-]
+def load_manufacturer_colors(filepath):
+    """
+    Lädt die Hersteller-Farben und gibt ein Dictionary zurück.
+    Fügt automatisch den Fallback-Hersteller 'Other' hinzu.
+    """
+    # Startet mit dem Fallback-Hersteller 'Other'
+    gruppencodes = {'Other': 'gray'} 
+    try:
+        df_colors = pd.read_csv(filepath)
+        # Konvertiert das DataFrame in ein Dictionary: {'Hersteller': 'Farbcode'}
+        # Aktualisiert das Dictionary mit den geladenen Werten
+        gruppencodes.update(df_colors.set_index('Hersteller')['Farbcode'].to_dict())
+        return gruppencodes
+    except FileNotFoundError:
+        print(f"FEHLER: Hersteller-Datei {filepath} nicht gefunden. Verwende Fallback-Farben.")
+        return gruppencodes # Gibt nur den Fallback zurück
+    except Exception as e:
+        print(f"FEHLER beim Laden der Herstellerfarben: {e}")
+        return gruppencodes # Gibt nur den Fallback zurück
 
-scarpa_performance_y = [
-    8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5,
-    8.5, 
-    5.5, # Force: +0.5 (von 5.0 auf 5.5)
-    5.5, # Force Wmn: +0.5 (von 5.0 auf 5.5)
-    5.0, 5.0, 
-    3.3, # Origin: 3.3 (von 3.5 auf 3.3)
-    3.3, # Origin Wmn: 3.3 (von 4.3 auf 3.3)
-    3.8, # Origin VS: 3.8 (von 3.3 auf 3.8)
-    3.8, # Origin VS Wmn: 3.8 (von 4.3 auf 3.8)
-    5.0, 
-    4.3, # Reflex VS: -0.7 (von 5.0 auf 4.3)
-    5.0, # Reflex VS Wmn: Performance unverändert (5.0)
-    5.5, 5.0, 5.0, 5.0, 5.0, 
-    8.5, 8.5, 8.5, 8.5, 9.0, 9.0, 9.0, 9.0, 
-    5.5, 5.5,
-    5.5, 5.5, 5.0, 5.0, 8.5, 8.5, 8.5, 8.5, 8.5, 8.5
-]
+def load_climbing_shoe_data(filepath, manufacturer_colors):
+    """
+    Lädt, bereinigt und validiert die Schuhdaten gemäß den Robustheitsregeln.
+    - Behandelt fehlende Hersteller.
+    - Behandelt ungültige/fehlende Koordinaten (setzt auf 5.5).
+    - Begrenzt Koordinaten auf die Skala [1.0, 10.0].
+    """
+    try:
+        df = pd.read_csv(filepath)
+    except Exception as e:
+        print(f"FEHLER beim Laden der Schuhdaten: {e}")
+        # Rückgabe eines Notfall-DataFrames
+        return pd.DataFrame({
+            'Schuhmodell': ['Datenfehler'],
+            'Hersteller': ['Other'],
+            'Support_X': [5.5],
+            'Performance_Y': [5.5],
+            'Volumen_Z': [5.5]
+        })
 
-scarpa_volumen_z = [
-    5.5, 5.5, 3.5, 1.0, 3.0, 3.0, 5.5, 8.0, 8.0, 5.5, # Drago (3.5) & Drago LV (1.0) aktualisiert
-    5.5, 5.5, 
-    5.2, # Force Wmn: -0.3 (von 5.5 auf 5.2)
-    4.8, # Helix: -0.7 (von 5.5 auf 4.8)
-    4.8, # Helix Wmn: -0.7 (von 5.5 auf 4.8)
-    6.0, # Origin: +0.5 (von 5.5 auf 6.0)
-    5.2, # Origin Wmn: -0.3 (von 5.5 auf 5.2)
-    5.5, 4.0, # Origin VS Wmn (4.0) aktualisiert
-    5.5, 
-    5.2, # Reflex VS Wmn: -0.3 (von 5.5 auf 5.2)
-    5.5, 8.0, 8.0, 8.0, 8.0, 
-    5.0, 5.0, 4.2, # Generator Wmn: -0.8 (von 5.0 auf 4.2)
-    5.0, # Generator Mid Wmn: -0.8 (von 5.0 auf 4.2)
-    3.0, 3.0, 3.0, 3.0, 
-    8.0, 5.5,
-    3.2, # Vapor: +0.2 (von 3.0 auf 3.2)
-    2.8, # Vapor WMN: -0.2 (von 3.0 auf 2.8)
-    5.5, 5.5, 5.5, 5.5, 3.0, 3.0, 3.0, 8.0
-]
-
-scarpa_toe = [
-    'Classic', 'Classic', 'Classic', 'Classic', 'Classic', 'Classic', 'Centre', 'Centre', 'Centre', 'Centre',
-    'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 
-    'Centre', 'Centre', 'Centre', 'Centre', 'Square', 'Square', 'Square', 'Square',
-    'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 'Centre', 
-    'Centre', 'Centre', 'Centre',
-    'Centre', 'Centre', 'Centre', 'Centre', 'Classic', 'Classic', 'Classic', 'Classic', 'Centre', 'Centre'
-]
+    # --- 2.1. Hersteller-Validierung (Regel: Unbekannter Hersteller -> 'Other') ---
+    known_manufacturers = set(manufacturer_colors.keys())
+    
+    # Fehlende Werte in der Spalte 'Hersteller' mit "Other" füllen
+    df['Hersteller'] = df['Hersteller'].fillna('Other') 
+    
+    # Unbekannte Hersteller (nicht in manufacturer_colors) auf "Other" setzen
+    df.loc[~df['Hersteller'].isin(known_manufacturers), 'Hersteller'] = 'Other'
 
 
-# --- ZUSAMMENFÜHRUNG DER GESAMTEN DATEN ---
-data = {
-    'Schuhmodell': la_sportiva_modelle + scarpa_modelle,
-    'Support_X': la_sportiva_support_x + scarpa_support_x,
-    'Performance_Y': la_sportiva_performance_y + scarpa_performance_y,
-    'Volumen_Z': la_sportiva_volumen_z + scarpa_volumen_z,
-    'Gruppe': ['La Sportiva'] * 37 + ['Scarpa'] * len(scarpa_modelle), 
-    'Toe': la_sportiva_toe + scarpa_toe 
-}
+    # --- 2.2. Koordinaten-Validierung (Regeln: NaN -> 5.5, Clip [1.0, 10.0]) ---
+    for col in ['Support_X', 'Performance_Y', 'Volumen_Z']:
+        # Konvertieren zu numerisch, Fehler werden zu NaN
+        df[col] = pd.to_numeric(df[col], errors='coerce') 
+        
+        # Fehlende/Ungültige Werte auf 5.5 setzen
+        df[col] = df[col].fillna(5.5) 
+        
+        # Werte auf die Skala [1.0, 10.0] begrenzen
+        df[col] = df[col].clip(lower=MIN_VAL, upper=MAX_VAL) 
 
-df = pd.DataFrame(data)
+    return df
 
-# --- GRUPPENFARBEN (Scarpa ist Schwarz) ---
-GRUPPEN_FARBEN = {
-    'La Sportiva': '#F1C31E', # Gelb/Orange
-    'Scarpa': '#000000',      # Schwarz
-}
+# Daten laden
+GRUPPEN_FARBEN = load_manufacturer_colors(MANUFACTURER_DATA_PATH)
+df = load_climbing_shoe_data(CLIMBING_SHOE_DATA_PATH, GRUPPEN_FARBEN)
 
-# --- ACHSEN-CONFIG ---
-MIN_VAL, MAX_VAL = 1, 10
-AXIS_RANGE = [1, 10]
 
-slider_support_labels = {i: '' for i in range(MIN_VAL, MAX_VAL + 1)}
-slider_performance_labels = {i: '' for i in range(MIN_VAL, MAX_VAL + 1)}
-slider_volumen_labels = {i: '' for i in range(MIN_VAL, MAX_VAL + 1)}
+# --- 3. ACHSEN-CONFIG ---
+# Die Achsen-Konfigurationen bleiben unverändert, da die Skala 1-10 fest ist.
+
+# Labels für Slider
+slider_support_labels = {i: '' for i in range(int(MIN_VAL), int(MAX_VAL) + 1)}
+slider_performance_labels = {i: '' for i in range(int(MIN_VAL), int(MAX_VAL) + 1)}
+slider_volumen_labels = {i: '' for i in range(int(MIN_VAL), int(MAX_VAL) + 1)}
 
 slider_support_labels.update({1: 'Min Support', 5: 'Mittel', 10: 'Max Support'})
 slider_performance_labels.update({1: 'Min Performance', 5: 'Mittel', 10: 'Max Performance'})
@@ -160,31 +104,36 @@ achsen_namen = {
     'Volumen_Z': 'Fußvolumen'
 }
 
-# HIER WURDEN DIE MAXIMAL-LABELS FÜR X und Z ANGEPASST
+# Achsen-Ticks für 3D-Plot
 achsen_ticks_3d = {
     'Support_X': {1: 'Min Support (1.0)', 5: 'Mittel', 10: 'Max'}, 
     'Performance_Y': {1: 'Min Perf (1.0)', 5: 'Mittel', 10: 'Max Perf (10.0)'},
     'Volumen_Z': {1: 'Min Vol (1.0)', 5: 'Mittel', 10: 'Max. Volumen'} 
 }
 
-# --- 2. HILFSFUNKTION FÜR DIE ERSTELLUNG DER 3D-FIGUR ---
+# --- 4. HILFSFUNKTION FÜR DIE ERSTELLUNG DER 3D-FIGUR ---
 def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
     """Erstellt eine Plotly 3D-Scatter-Figur basierend auf dem Haupt- und dem gefilterten DataFrame."""
     
     fig = go.Figure()
 
-    # 2.1 Plotten der Basis-Punkte (alle, leicht transparent)
-    for group_name in dataframe['Gruppe'].unique():
-        df_group = dataframe[dataframe['Gruppe'] == group_name]
-        group_color = GRUPPEN_FARBEN.get(group_name, 'gray')
+    # Sortiert die Hersteller, um sicherzustellen, dass 'Other' falls vorhanden, zuletzt geplottet wird 
+    # (damit es im Fall von Überlappungen nicht die Hauptfarben dominiert)
+    manufacturer_order = sorted(dataframe['Hersteller'].unique(), key=lambda x: (x == 'Other', x))
 
-        # Erstellung des Hover-Textes (OHNE 'Toe')
+    # 4.1 Plotten der Basis-Punkte (alle, leicht transparent)
+    for group_name in manufacturer_order:
+        df_group = dataframe[dataframe['Hersteller'] == group_name]
+        # Die Farbe wird aus dem dynamisch geladenen Dictionary abgerufen
+        group_color = GRUPPEN_FARBEN.get(group_name, 'gray') 
+
+        # Erstellung des Hover-Textes
         hover_texts = [
             f"Schuh: {row['Schuhmodell']}<br>"
-            f"Hersteller: {row['Gruppe']}<br>"
-            f"Support (X): {row['Support_X']}<br>"
-            f"Performance (Y): {row['Performance_Y']}<br>"
-            f"Volumen (Z): {row['Volumen_Z']}"
+            f"Hersteller: {row['Hersteller']}<br>"
+            f"Support (X): {row['Support_X']:.1f}<br>"
+            f"Performance (Y): {row['Performance_Y']:.1f}<br>"
+            f"Volumen (Z): {row['Volumen_Z']:.1f}"
             for index, row in df_group.iterrows()
         ]
 
@@ -199,18 +148,17 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
             hovertext=hover_texts
         ))
 
-    # 2.2 Plotten der GEFILTERTEN Punkte (Highlighted)
-    # Behält die Logik bei, die gefilterten Punkte in ihrer Gruppenfarbe darzustellen
-    for group_name in filtered_dataframe['Gruppe'].unique():
-        df_group_filtered = filtered_dataframe[filtered_dataframe['Gruppe'] == group_name]
+    # 4.2 Plotten der GEFILTERTEN Punkte (Highlighted)
+    for group_name in filtered_dataframe['Hersteller'].unique():
+        df_group_filtered = filtered_dataframe[filtered_dataframe['Hersteller'] == group_name]
         group_color = GRUPPEN_FARBEN.get(group_name, 'gray')
         
         highlight_hover_texts = [
             f"Schuh: {row['Schuhmodell']} (Gefiltert)<br>"
-            f"Hersteller: {row['Gruppe']}<br>"
-            f"Support (X): {row['Support_X']}<br>"
-            f"Performance (Y): {row['Performance_Y']}<br>"
-            f"Volumen (Z): {row['Volumen_Z']}"
+            f"Hersteller: {row['Hersteller']}<br>"
+            f"Support (X): {row['Support_X']:.1f}<br>"
+            f"Performance (Y): {row['Performance_Y']:.1f}<br>"
+            f"Volumen (Z): {row['Volumen_Z']:.1f}"
             for index, row in df_group_filtered.iterrows()
         ]
 
@@ -219,7 +167,6 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
             y=df_group_filtered['Performance_Y'],
             z=df_group_filtered['Volumen_Z'],
             mode='markers',
-            # Durchmesser um 20% reduziert (von 10 auf 8)
             marker=dict(size=8, color=group_color, opacity=1.0), 
             name=f'Gefiltert ({group_name})',
             showlegend=False,
@@ -227,7 +174,7 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
             hovertext=highlight_hover_texts
         ))
     
-    # 2.3 Permanentes Hinzufügen der Schuhnamen als Annotationen (nur für gefilterte)
+    # 4.3 Permanentes Hinzufügen der Schuhnamen als Annotationen (nur für gefilterte)
     annotations = []
     for index, row in filtered_dataframe.iterrows():
         annotations.append(
@@ -243,7 +190,7 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
             )
         )
     
-    # 2.4 Layout konfigurieren
+    # 4.4 Layout konfigurieren
     fig.update_layout(
         margin=dict(l=0, r=0, b=0, t=0),
         scene=dict(
@@ -253,9 +200,9 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
                     font=dict(size=14, color="#333"),
                 ),
                 tickvals=list(achsen_ticks_3d['Support_X'].keys()),
-                ticktext=[achsen_ticks_3d['Support_X'].get(k, '') for k in range(MIN_VAL, MAX_VAL + 1)],
+                ticktext=[achsen_ticks_3d['Support_X'].get(k, '') for k in range(int(MIN_VAL), int(MAX_VAL) + 1)],
                 range=[MIN_VAL - 0.5, MAX_VAL + 0.5],
-                nticks=MAX_VAL - MIN_VAL + 1
+                nticks=int(MAX_VAL - MIN_VAL) + 1
             ),
             yaxis=dict(
                 title=dict(
@@ -263,9 +210,9 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
                     font=dict(size=14, color="#333"),
                 ),
                 tickvals=list(achsen_ticks_3d['Performance_Y'].keys()),
-                ticktext=[achsen_ticks_3d['Performance_Y'].get(k, '') for k in range(MIN_VAL, MAX_VAL + 1)],
+                ticktext=[achsen_ticks_3d['Performance_Y'].get(k, '') for k in range(int(MIN_VAL), int(MAX_VAL) + 1)],
                 range=[MIN_VAL - 0.5, MAX_VAL + 0.5],
-                nticks=MAX_VAL - MIN_VAL + 1
+                nticks=int(MAX_VAL - MIN_VAL) + 1
             ),
             zaxis=dict(
                 title=dict(
@@ -273,9 +220,9 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
                     font=dict(size=14, color="#333"),
                 ),
                 tickvals=list(achsen_ticks_3d['Volumen_Z'].keys()),
-                ticktext=[achsen_ticks_3d['Volumen_Z'].get(k, '') for k in range(MIN_VAL, MAX_VAL + 1)],
+                ticktext=[achsen_ticks_3d['Volumen_Z'].get(k, '') for k in range(int(MIN_VAL), int(MAX_VAL) + 1)],
                 range=[MIN_VAL - 0.5, MAX_VAL + 0.5],
-                nticks=MAX_VAL - MIN_VAL + 1
+                nticks=int(MAX_VAL - MIN_VAL) + 1
             ),
             annotations=annotations
         ),
@@ -283,12 +230,11 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
     )
     return fig
 
-# --- 3. DASH LAYOUT ERSTELLUNG ---
+# --- 5. DASH LAYOUT ERSTELLUNG (Bleibt unverändert) ---
 app = dash.Dash(__name__)
 server = app.server
 
 # Standardwerte für die Slider
-MIN_VAL, MAX_VAL = 1, 10
 default_x_range = [MIN_VAL, MAX_VAL]
 default_y_range = [MIN_VAL, MAX_VAL]
 default_z_range = [MIN_VAL, MAX_VAL]
@@ -317,7 +263,6 @@ app.layout = html.Div(
         ),
         html.Div(
             style={
-                # Breite von 50% auf 40% reduziert
                 'width': '40%', 
                 'marginLeft': '0', 
                 'display': 'flex', 
@@ -329,7 +274,6 @@ app.layout = html.Div(
             children=[
                 # --- Slider X-Achse (Support) ---
                 html.Div([
-                    # PRÄFIX 'Filter:' ENTFERNT
                     html.Label(f'**{achsen_namen["Support_X"]}**', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='x-range-slider',
@@ -342,7 +286,6 @@ app.layout = html.Div(
 
                 # --- Slider Y-Achse (Performance) ---
                 html.Div([
-                    # PRÄFIX 'Filter:' ENTFERNT
                     html.Label(f'**{achsen_namen["Performance_Y"]}**', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='y-range-slider',
@@ -355,7 +298,6 @@ app.layout = html.Div(
 
                 # --- Slider Z-Achse (Volumen) ---
                 html.Div([
-                    # PRÄFIX 'Filter:' ENTFERNT
                     html.Label(f'**{achsen_namen["Volumen_Z"]}**', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='z-range-slider',
@@ -370,7 +312,7 @@ app.layout = html.Div(
     ]
 )
 
-# --- 4. CALLBACKS ---
+# --- 6. CALLBACKS (Bleibt unverändert) ---
 @app.callback(
     Output('kletterschuh-3d-plot', 'figure'),
     [Input('x-range-slider', 'value'),
