@@ -79,10 +79,10 @@ scarpa_performance_y = [
     5.5, # Force: +0.5 (von 5.0 auf 5.5)
     5.5, # Force Wmn: +0.5 (von 5.0 auf 5.5)
     5.0, 5.0, 
-    3.5, # Origin: -0.7 (von 4.2 auf 3.5)
-    4.3, # Origin Wmn: -0.7 (von 5.0 auf 4.3)
-    3.3, # Origin VS: -0.7 (von 4.0 auf 3.3)
-    4.3, # Origin VS Wmn: -0.7 (von 5.0 auf 4.3)
+    3.3, # Origin: 3.3 (von 3.5 auf 3.3)
+    3.3, # Origin Wmn: 3.3 (von 4.3 auf 3.3)
+    3.8, # Origin VS: 3.8 (von 3.3 auf 3.8)
+    3.8, # Origin VS Wmn: 3.8 (von 4.3 auf 3.8)
     5.0, 
     4.3, # Reflex VS: -0.7 (von 5.0 auf 4.3)
     5.0, # Reflex VS Wmn: Performance unverändert (5.0)
