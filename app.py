@@ -160,10 +160,11 @@ achsen_namen = {
     'Volumen_Z': 'Fußvolumen'
 }
 
+# HIER WURDEN DIE MAXIMAL-LABELS FÜR X und Z ANGEPASST
 achsen_ticks_3d = {
-    'Support_X': {1: 'Min Support (1.0)', 5: 'Mittel', 10: 'Max Support (10.0)'},
+    'Support_X': {1: 'Min Support (1.0)', 5: 'Mittel', 10: 'Max'}, 
     'Performance_Y': {1: 'Min Perf (1.0)', 5: 'Mittel', 10: 'Max Perf (10.0)'},
-    'Volumen_Z': {1: 'Min Vol (1.0)', 5: 'Mittel', 10: 'Max Vol (10.0)'}
+    'Volumen_Z': {1: 'Min Vol (1.0)', 5: 'Mittel', 10: 'Max. Volumen'} 
 }
 
 # --- 2. HILFSFUNKTION FÜR DIE ERSTELLUNG DER 3D-FIGUR ---
@@ -313,13 +314,11 @@ app.layout = html.Div(
             figure=initial_figure, 
             style={'height': '650px', 'margin-bottom': '20px'}
         ),
-        # **********************************************
-        # ANGEPASSTER STIL FÜR DIE SLIDER: width: 50%
-        # **********************************************
         html.Div(
             style={
-                'width': '50%', # Begrenzt die Breite auf 50%
-                'marginLeft': '0', # Stellt sicher, dass es linksbündig startet
+                # Breite von 50% auf 40% reduziert
+                'width': '40%', 
+                'marginLeft': '0', 
                 'display': 'flex', 
                 'flexDirection': 'column', 
                 'gap': '30px', 
@@ -329,7 +328,8 @@ app.layout = html.Div(
             children=[
                 # --- Slider X-Achse (Support) ---
                 html.Div([
-                    html.Label(f'**Filter:** {achsen_namen["Support_X"]}', style={'fontWeight': 'bold'}),
+                    # PRÄFIX 'Filter:' ENTFERNT
+                    html.Label(f'**{achsen_namen["Support_X"]}**', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='x-range-slider',
                         min=MIN_VAL, max=MAX_VAL, 
@@ -341,7 +341,8 @@ app.layout = html.Div(
 
                 # --- Slider Y-Achse (Performance) ---
                 html.Div([
-                    html.Label(f'**Filter:** {achsen_namen["Performance_Y"]}', style={'fontWeight': 'bold'}),
+                    # PRÄFIX 'Filter:' ENTFERNT
+                    html.Label(f'**{achsen_namen["Performance_Y"]}**', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='y-range-slider',
                         min=MIN_VAL, max=MAX_VAL, 
@@ -353,7 +354,8 @@ app.layout = html.Div(
 
                 # --- Slider Z-Achse (Volumen) ---
                 html.Div([
-                    html.Label(f'**Filter:** {achsen_namen["Volumen_Z"]}', style={'fontWeight': 'bold'}),
+                    # PRÄFIX 'Filter:' ENTFERNT
+                    html.Label(f'**{achsen_namen["Volumen_Z"]}**', style={'fontWeight': 'bold'}),
                     dcc.RangeSlider(
                         id='z-range-slider',
                         min=MIN_VAL, max=MAX_VAL, 
