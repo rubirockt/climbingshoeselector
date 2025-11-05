@@ -24,7 +24,7 @@ la_sportiva_support_x = [
     5.5, 4.0, 10.0, 8.5, 
     1.0, 
     10.0, 7.0, 7.0, 8.5, 8.5, # Mythos Eco: X unverändert
-    5.5, 7.0, 7.0, 7.0, 7.0, 1.0, 1.0, 7.0, 7.0, 10.0,
+    5.5, 7.0, 7.5, 7.0, 7.0, 0.5, 1.0, 7.0, 7.0, 10.0, # Tarantula (7.5) & Gekko (0.5) aktualisiert
     4.5, 4.5, 1.0, 4.0, 5.5, 8.5, 4.3
 ]
 
@@ -34,7 +34,7 @@ la_sportiva_performance_y = [
     8.0, 9.5, 9.5, 
     9.8, 
     9.2, 5.0, 6.0, 4.0, 4.2, # Mythos Eco: Performance +0.2 (von 4.0 auf 4.2)
-    5.8, 2.0, 2.0, 2.0, 4.8, 1.0, 1.0, 1.0, 1.0, 10.0,
+    5.8, 2.0, 2.0, 2.7, 4.8, 1.0, 1.0, 1.0, 1.0, 10.0, # Aragon (2.7) aktualisiert
     4.5, 1.4, 7.5, 7.2, 4.0, 7.0, 8.2
 ]
 
@@ -93,15 +93,15 @@ scarpa_performance_y = [
 ]
 
 scarpa_volumen_z = [
-    5.5, 5.5, 3.0, 3.0, 3.0, 3.0, 5.5, 8.0, 8.0, 5.5,
+    5.5, 5.5, 3.5, 1.0, 3.0, 3.0, 5.5, 8.0, 8.0, 5.5, # Drago (3.5) & Drago LV (1.0) aktualisiert
     5.5, 5.5, 
     5.2, # Force Wmn: -0.3 (von 5.5 auf 5.2)
     4.8, # Helix: -0.7 (von 5.5 auf 4.8)
     4.8, # Helix Wmn: -0.7 (von 5.5 auf 4.8)
     6.0, # Origin: +0.5 (von 5.5 auf 6.0)
     5.2, # Origin Wmn: -0.3 (von 5.5 auf 5.2)
-    5.5, 5.5, 
-    5.5, 5.5, 
+    5.5, 4.0, # Origin VS Wmn (4.0) aktualisiert
+    5.5, 
     5.2, # Reflex VS Wmn: -0.3 (von 5.5 auf 5.2)
     5.5, 8.0, 8.0, 8.0, 8.0, 
     5.0, 5.0, 4.2, # Generator Wmn: -0.8 (von 5.0 auf 4.2)
@@ -219,7 +219,8 @@ def create_3d_figure(dataframe, filtered_dataframe, x_range, y_range, z_range):
             y=df_group_filtered['Performance_Y'],
             z=df_group_filtered['Volumen_Z'],
             mode='markers',
-            marker=dict(size=10, color=group_color, opacity=1.0), # FARBE WIRD AUS GRUPPEN_FARBEN GENOMMEN
+            # Durchmesser um 20% reduziert (von 10 auf 8)
+            marker=dict(size=8, color=group_color, opacity=1.0), 
             name=f'Gefiltert ({group_name})',
             showlegend=False,
             hoverinfo='text',
