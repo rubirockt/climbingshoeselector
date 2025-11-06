@@ -36,7 +36,7 @@ id,Schuhmodell,Hersteller,Support_X,Performance_Y,Volumen_Z,Toe,Bildpfad
 35,Mistral,La Sportiva,5.5,4.0,5.0,N/A,35.png
 36,Otaki,La Sportiva,8.5,7.0,5.5,N/A,36.png
 37,Genius,La Sportiva,4.3,8.2,7.0,N/A,37.png
-38,Mago,Scarpa,6.5,8.5,5.5,Classic,38.png
+38,Mago,Scarpa,5.5,8.5,5.5,Classic,38.png
 39,Booster,Scarpa,5.0,8.5,6.5,Classic,39.png
 40,Drago,Scarpa,2.0,8.5,3.5,Classic,40.png
 41,Drago LV,Scarpa,2.0,8.5,2.5,Classic,41.png
@@ -71,7 +71,7 @@ id,Schuhmodell,Hersteller,Support_X,Performance_Y,Volumen_Z,Toe,Bildpfad
 70,Vapor S Wmn,Scarpa,5.0,5.8,2.5,Centre,70.png
 71,Vapor V,Scarpa,7.5,5.8,3.5,Centre,71.png
 72,Vapor V LV,Scarpa,7.5,5.8,2.5,Centre,72.png
-73,Arpia V,Scarpa,5.0,5.0,6.0,Centre,73.png
+73,Arpia V,Scarpa,5.5,5.0,6.0,Centre,73.png
 74,Arpia V LV,Scarpa,5.5,4.7,5.0,Centre,74.png
 75,Vapor,Scarpa,9.0,6.5,3.2,Centre,75.png
 76,Vapor WMN,Scarpa,9.0,6.5,2.8,Centre,76.png
