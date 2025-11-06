@@ -1,0 +1,5 @@
+Key,Value
+DATA_DIR,data/
+SHOE_DATA_FILE,climbingshoedata.csv
+MANUFACTURER_FILE,manufacturer.csv
+IMAGE_SUBDIR,images/
