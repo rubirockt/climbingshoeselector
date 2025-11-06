@@ -4,6 +4,8 @@ import plotly.express as px
 from dash import dcc, html, dash_table
 import dash_bootstrap_components as dbc
 import os
+# NEU: Wir benötigen send_from_directory, um statische Dateien von außerhalb des 'assets/' Ordners zu servieren
+from flask import send_from_directory
 
 # --- 1. Konfigurations- und Datenladeroutinen ---
 
@@ -76,7 +78,7 @@ def load_climbing_shoe_data(filepath, manufacturer_colors):
         df['Anzeige_Hersteller'] = df['Hersteller'].apply(get_display_manufacturer)
         df['Farbcode'] = df['Anzeige_Hersteller'].map(manufacturer_colors)
         
-        # NEUE SPALTE FÜR EINZELSPALTEN-ANZEIGE
+        # Spalte für Einzelsspalten-Anzeige
         df['Vollständiges_Modell'] = df['Anzeige_Hersteller'] + ' ' + df['Schuhmodell']
         
         return df
@@ -125,13 +127,13 @@ def create_tooltip_data(df_filtered):
 
 # --- App Layout ---
 app.layout = dbc.Container([
-    # Punkt 1, 2, 3: Geänderte Überschrift, reduzierte Schriftgröße und Abstand entfernt
+    # Geänderte Überschrift, reduzierte Schriftgröße und Abstand entfernt
     html.H1("Kletterschuh-Finder", className="mt-4 mb-0 text-center", style={'fontSize': '2.1rem'}),
     
     # --- BLOCK 1: 3D Plot (OBEN) ---
     dbc.Row([
         dbc.Col(
-            # Punkt 3: Abstand zum Plot ist 0, da der H1 mb-0 hat und der Plot mt-4
+            # Abstand zum Plot ist 0, da der H1 mb-0 hat und der Plot mt-4
             dcc.Graph(id='3d-scatter-plot', style={'height': '70vh'}, className="mt-4"), 
             width=12,
             className="p-4"
@@ -143,7 +145,7 @@ app.layout = dbc.Container([
         # Spalte 1: Filter-Regler (Linke Seite)
         dbc.Col([
             html.Div(id='filter-container', children=[
-                # Punkt 4: Reduzierte Schriftgröße
+                # Reduzierte Schriftgröße
                 html.H4("Filterkriterien", className="mb-3", style={'fontSize': '1.05rem'}),
                 
                 html.Label("Minimaler Support (X-Achse)", className="mt-2"),
@@ -186,7 +188,7 @@ app.layout = dbc.Container([
             dbc.Row([
                 # Unterspalte 2.1: DataTable (40% der rechten Spalte)
                 dbc.Col([
-                    # Punkt 4: Reduzierte Schriftgröße
+                    # Reduzierte Schriftgröße
                     html.H4("Gefilterte Modelle", className="mb-2", style={'fontSize': '1.05rem'}),
                     html.Div(
                         id='filtered-list-container',
@@ -194,26 +196,27 @@ app.layout = dbc.Container([
                         children=[
                             dash_table.DataTable(
                                 id='shoes-table',
-                                # Punkt 8: Nur die Vollständiges_Modell Spalte wird definiert
+                                # Nur die Vollständiges_Modell Spalte wird definiert
                                 columns=[
                                     {"name": "Modell", "id": "Vollständiges_Modell"},
+                                    # Schuhmodell ist nicht sichtbar, aber im data-Array enthalten für den Callback
                                 ],
                                 # Daten enthalten den Schlüssel 'Schuhmodell' für die Callback-Logik
                                 data=DF_SHOES[['Vollständiges_Modell', 'Schuhmodell']].to_dict('records'),
                                 
-                                # Punkt 7: Spaltenüberschriftenzeile entfernen
+                                # Spaltenüberschriftenzeile entfernen
                                 style_header={'display': 'none'},
 
-                                # Punkt 2: Max Höhe und Scrollbar
+                                # Max Höhe und Scrollbar
                                 style_table={'overflowY': 'scroll', 'maxHeight': '400px', 'width': '100%'}, 
                                 
-                                # Punkt 6: Auswahl per Klick (ohne sichtbare Radio-Buttons)
+                                # Auswahl per Klick (ohne sichtbare Radio-Buttons)
                                 row_selectable='single', 
                                 selected_rows=[0], 
                                 tooltip_data=create_tooltip_data(DF_SHOES),
                                 tooltip_duration=None,
                                 
-                                # Punkt 5: Schriftgröße der Listeneinträge reduzieren
+                                # Schriftgröße der Listeneinträge reduzieren
                                 style_data={
                                     'fontSize': '14pt', # Reduziert
                                     'padding': '5px 10px' # Reduziertes Padding für kompakte Optik
@@ -225,7 +228,7 @@ app.layout = dbc.Container([
 
                 # Unterspalte 2.2: Bildvorschau (60% der rechten Spalte)
                 dbc.Col([
-                    # Punkt 4: Reduzierte Schriftgröße
+                    # Reduzierte Schriftgröße
                     html.H4("Modell-Vorschau", className="mb-2", style={'fontSize': '1.05rem'}),
                     html.Div(
                         id='image-display-area',
@@ -260,7 +263,7 @@ app.layout = dbc.Container([
 ], fluid=True)
 
 
-# --- Callbacks (Unverändert, da die Logik noch korrekt ist) ---
+# --- Callbacks ---
 
 # Callback 1: Filtert die Daten und aktualisiert Plot & DataTable
 @app.callback(
@@ -339,6 +342,7 @@ def update_image_preview(selected_rows, rows):
     row_index = selected_rows[0]
     
     # Holt den Schlüssel 'Schuhmodell' aus den Daten
+    # WICHTIG: Die Spalte 'Schuhmodell' ist zwar nicht sichtbar, aber im 'rows' Daten-Array enthalten.
     selected_shoe_model = rows[row_index]['Schuhmodell']
     
     # Findet die vollständige Zeile im DF_SHOES
@@ -351,6 +355,7 @@ def update_image_preview(selected_rows, rows):
         image_filename = shoe_data['Bildpfad']
         if image_filename and pd.notna(image_filename):
             full_image_url = os.path.join(CONFIG['IMAGE_ASSET_URL_BASE'], image_filename)
+            # URL-Pfad für den Browser
             image_src = full_image_url.replace('\\', '/').replace('//', '/')
         else:
             image_src = PLACEHOLDER_IMAGE_URL
@@ -372,5 +377,15 @@ def update_image_preview(selected_rows, rows):
     return PLACEHOLDER_IMAGE_URL, default_name, default_tooltip
 
 
-# --- Gunicorn/WSGI Server Fix ---
+# --- Gunicorn/WSGI Server Fix und NEUE ROUTE ---
 server = app.server
+
+# NEU: Definiert eine statische Route im zugrundeliegenden Flask-Server,
+# die den URL-Pfad "/data/<Dateiname>" dem lokalen Verzeichnis "data/" zuordnet.
+# Dies ist notwendig, da Dash nur "assets/" standardmäßig exponiert.
+# Die Pfad-Variable 'path' nimmt alles nach '/data/' auf (z.B. 'images/38.png').
+@server.route(f"/{CONFIG['DATA_DIR']}<path:path>")
+def serve_static(path):
+    # send_from_directory sucht nach der Datei im lokalen CONFIG['DATA_DIR'] ('data/')
+    # und sendet sie an den Browser.
+    return send_from_directory(CONFIG['DATA_DIR'], path)
