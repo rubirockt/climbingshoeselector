@@ -77,9 +77,11 @@ def load_climbing_shoe_data(filepath, manufacturer_colors):
         df['Anzeige_Hersteller'] = df['Hersteller'].apply(get_display_manufacturer)
         df['Farbcode'] = df['Anzeige_Hersteller'].map(manufacturer_colors)
         
-        # BUG FIX 2: Zurück zur einfachen Textverkettung, um Render-Probleme in der DataTable zu vermeiden.
-        # Die Färbung erfolgt über style_data_conditional.
+        # Wird für den Hover-Namen des 3D-Plots verwendet (immer noch Hersteller + Modell)
         df['Vollständiges_Modell'] = df['Anzeige_Hersteller'] + ' ' + df['Schuhmodell']
+
+        # Spalte für die Tabellendarstellung: Hersteller + **Modell** (fett)
+        df['Formatierter_Modellname'] = df['Anzeige_Hersteller'] + ' **' + df['Schuhmodell'] + '**'
         
         return df
 
@@ -108,13 +110,16 @@ PLACEHOLDER_IMAGE_URL = '/assets/placeholder.svg'
 
 # --- Funktionen für Tooltip-Erstellung (für die DataTable) ---
 def create_tooltip_data(df_filtered):
-    """Erstellt die Tooltip-Datenstruktur für die DataTable ohne Achsen-Namen."""
+    """
+    Erstellt die Tooltip-Datenstruktur, zugeordnet zur sichtbaren Spalte 
+    'Formatierter_Modellname'.
+    """
     tooltip_data = []
     
     for index, row in df_filtered.iterrows():
         tooltip_item = {}
-        # Hinzufügen von Zeilenumbrüchen im Markdown-Tooltip und Entfernung der Achsen-Namen (X/Y/Z)
-        tooltip_item['Vollständiges_Modell'] = {
+        # Der Tooltip wird der Spalte 'Formatierter_Modellname' zugewiesen
+        tooltip_item['Formatierter_Modellname'] = {
             'value': (
                 f"Hersteller: {row['Anzeige_Hersteller']}\n\n"
                 f"Support: {row['Support_X']:.1f}\n\n"
@@ -127,16 +132,6 @@ def create_tooltip_data(df_filtered):
     return tooltip_data
 
 # --- App Layout ---
-
-# Erstelle die Liste der bedingten Style-Regeln für die Herstellerfarben
-manufacturer_style_conditions = [
-    {
-        'if': {'filter_query': f'{{Anzeige_Hersteller}} eq "{m}"', 'column_id': 'Vollständiges_Modell'},
-        'color': MANUFACTURER_COLORS.get(m, 'black'),
-        # optional: um den Text fett zu machen, was aber nur mit style_data_conditional für die ganze Zelle geht.
-        # 'fontWeight': 'bold' 
-    } for m in MANUFACTURER_COLORS.keys()
-]
 
 app.layout = dbc.Container([
     # Geänderte Überschrift, reduzierte Schriftgröße und Abstand entfernt
@@ -202,8 +197,8 @@ app.layout = dbc.Container([
             dbc.Row([
                 # Unterspalte 2.1: DataTable (Breite: 7/12 der rechten Spalte)
                 dbc.Col([
-                    # Tabellenüberschrift korrigiert
-                    html.H4("Geeignete Modelle", className="mb-2", style={'fontSize': '1.05rem'}),
+                    # Abstand zur Tabelle auf 3px reduziert
+                    html.H4("Geeignete Modelle", style={'fontSize': '1.05rem', 'marginBottom': '3px'}),
                     html.Div(
                         id='filtered-list-container',
                         style={'height': '100%', 'overflowY': 'auto'}, 
@@ -211,31 +206,36 @@ app.layout = dbc.Container([
                             dash_table.DataTable(
                                 id='shoes-table',
                                 columns=[
-                                    {"name": "Modell", "id": "Vollständiges_Modell"},
-                                    # Diese Spalte ist unsichtbar, wird aber für die bedingte Formatierung benötigt
-                                    {"name": "Hersteller", "id": "Anzeige_Hersteller", "hidden": True},
+                                    # Nur eine Spalte für die formatierte Anzeige
+                                    {"name": "Modell", "id": "Formatierter_Modellname", "presentation": "markdown"},
+                                    # Wird versteckt, aber für den Lookup im Callback benötigt
+                                    {"name": "Modell", "id": "Schuhmodell", "hidden": True},
                                 ],
                                 # Daten werden im Callback aktualisiert
-                                data=DF_SHOES[['Vollständiges_Modell', 'Schuhmodell', 'Anzeige_Hersteller']].to_dict('records'),
+                                data=DF_SHOES[['Formatierter_Modellname', 'Schuhmodell']].to_dict('records'),
                                 
-                                style_header={'display': 'none'},
-                                # NEU: Max Höhe auf 380px erhöht
-                                style_table={'overflowY': 'scroll', 'maxHeight': '380px', 'width': '100%'}, 
+                                style_header={'display': 'none'}, # Überschriften weiterhin ausblenden
+                                
+                                # GEÄNDERT: marginTop/paddingTop auf 0px gesetzt, um Abstand zu eliminieren
+                                style_table={'overflowY': 'scroll', 'maxHeight': '380px', 'width': '100%', 'marginTop': '0px', 'paddingTop': '0px'}, 
                                 
                                 row_selectable='single', 
                                 selected_rows=[0], 
+                                # Tooltip-Daten verwenden nun 'Formatierter_Modellname'
                                 tooltip_data=create_tooltip_data(DF_SHOES),
                                 tooltip_duration=None,
                                 
                                 style_data={
                                     'fontSize': '12pt', 
-                                    'padding': '5px 10px' 
+                                    'padding': '5px 10px',
+                                    # Textfarbe Schwarz für die gesamte Zelle
+                                    'color': '#000000', 
                                 },
                                 
-                                # Bedingte Formatierung zur Farbgebung des gesamten Zelleintrags
+                                # Bedingte Formatierung nur für Zeilenfarben (keine Herstellerfarben mehr)
                                 style_data_conditional=[
                                     {'if': {'row_index': 'odd'}, 'backgroundColor': 'rgb(248, 248, 248)'},
-                                ] + manufacturer_style_conditions,
+                                ],
                             )
                         ]
                     )
@@ -311,7 +311,7 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
         y='Performance_Y', 
         z='Volumen_Z',
         color='Anzeige_Hersteller',
-        # FEHLERBEHEBUNG: hover_name hinzugefügt, damit der Modellname im Tooltip des Plots angezeigt wird
+        # hover_name verwendet weiterhin 'Vollständiges_Modell'
         hover_name='Vollständiges_Modell',
         color_discrete_map=MANUFACTURER_COLORS,
         title=None, 
@@ -324,10 +324,10 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
     )
     fig.update_layout(scene=dict(xaxis=dict(range=[0.5, 10.5]), yaxis=dict(range=[0.5, 10.5]), zaxis=dict(range=[0.5, 10.5])))
 
-    # Aktualisierung der DataTable-Daten
-    table_data = df_filtered[['Vollständiges_Modell', 'Schuhmodell', 'Anzeige_Hersteller']].to_dict('records')
+    # Aktualisierung der DataTable-Daten, nun mit der formatierten Spalte und der versteckten Modell ID
+    table_data = df_filtered[['Formatierter_Modellname', 'Schuhmodell']].to_dict('records')
     
-    # Aktualisierung der Tooltip-Daten (ohne Achsen-Namen)
+    # Aktualisierung der Tooltip-Daten
     tooltip_data = create_tooltip_data(df_filtered)
 
     # Versuch, die Auswahl beizubehalten, ansonsten Standard auf erste Zeile
@@ -361,7 +361,9 @@ def update_image_preview(selected_rows, rows):
 
     row_index = selected_rows[0]
     
+    # Sicherstellung, dass wir den tatsächlichen Modellnamen (die versteckte Spalte) zur Suche verwenden
     selected_shoe_model = rows[row_index]['Schuhmodell']
+    # Suche die vollständige Reihe im globalen DataFrame DF_SHOES anhand des Modellnamens
     shoe_row = DF_SHOES[DF_SHOES['Schuhmodell'] == selected_shoe_model]
 
     if not shoe_row.empty:
