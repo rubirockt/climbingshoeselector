@@ -66,7 +66,7 @@ def load_climbing_shoe_data(filepath, manufacturer_colors):
         
         numeric_cols = ['Support_X', 'Performance_Y', 'Volumen_Z']
         for col in numeric_cols:
-            df[col] = pd.to_numeric(col, errors='coerce').fillna(5.5)
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(5.5)
             df[col] = df[col].clip(lower=1.0, upper=10.0)
 
         df['Hersteller'] = df['Hersteller'].fillna('Not provided').astype(str)
@@ -77,9 +77,8 @@ def load_climbing_shoe_data(filepath, manufacturer_colors):
         df['Anzeige_Hersteller'] = df['Hersteller'].apply(get_display_manufacturer)
         df['Farbcode'] = df['Anzeige_Hersteller'].map(manufacturer_colors)
         
-        # BUG FIX: Entferne Markdown/HTML, um sichtbare Tags zu vermeiden.
-        # Verwenden Sie stattdessen eine einfache Textverkettung. Die Färbung 
-        # erfolgt über style_data_conditional.
+        # BUG FIX 2: Zurück zur einfachen Textverkettung, um Render-Probleme in der DataTable zu vermeiden.
+        # Die Färbung erfolgt über style_data_conditional.
         df['Vollständiges_Modell'] = df['Anzeige_Hersteller'] + ' ' + df['Schuhmodell']
         
         return df
@@ -130,11 +129,12 @@ def create_tooltip_data(df_filtered):
 # --- App Layout ---
 
 # Erstelle die Liste der bedingten Style-Regeln für die Herstellerfarben
-# Diese Liste wird verwendet, um die Farbe des gesamten Zelleintrags basierend auf dem Hersteller festzulegen.
 manufacturer_style_conditions = [
     {
-        'if': {'filter_query': f'{{Anzeige_Hersteller}} eq "{m}"'},
-        'color': MANUFACTURER_COLORS.get(m, 'black')
+        'if': {'filter_query': f'{{Anzeige_Hersteller}} eq "{m}"', 'column_id': 'Vollständiges_Modell'},
+        'color': MANUFACTURER_COLORS.get(m, 'black'),
+        # optional: um den Text fett zu machen, was aber nur mit style_data_conditional für die ganze Zelle geht.
+        # 'fontWeight': 'bold' 
     } for m in MANUFACTURER_COLORS.keys()
 ]
 
@@ -202,7 +202,7 @@ app.layout = dbc.Container([
             dbc.Row([
                 # Unterspalte 2.1: DataTable (Breite: 7/12 der rechten Spalte)
                 dbc.Col([
-                    # NEU: Tabellenüberschrift korrigiert
+                    # Tabellenüberschrift korrigiert
                     html.H4("Geeignete Modelle", className="mb-2", style={'fontSize': '1.05rem'}),
                     html.Div(
                         id='filtered-list-container',
@@ -219,7 +219,7 @@ app.layout = dbc.Container([
                                 data=DF_SHOES[['Vollständiges_Modell', 'Schuhmodell', 'Anzeige_Hersteller']].to_dict('records'),
                                 
                                 style_header={'display': 'none'},
-                                # NEU: Max Höhe auf 380px erhöht (ungefähr +1 Element)
+                                # NEU: Max Höhe auf 380px erhöht
                                 style_table={'overflowY': 'scroll', 'maxHeight': '380px', 'width': '100%'}, 
                                 
                                 row_selectable='single', 
@@ -232,7 +232,7 @@ app.layout = dbc.Container([
                                     'padding': '5px 10px' 
                                 },
                                 
-                                # NEU: Bedingte Formatierung zur Farbgebung des gesamten Zelleintrags
+                                # Bedingte Formatierung zur Farbgebung des gesamten Zelleintrags
                                 style_data_conditional=[
                                     {'if': {'row_index': 'odd'}, 'backgroundColor': 'rgb(248, 248, 248)'},
                                 ] + manufacturer_style_conditions,
@@ -311,6 +311,8 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
         y='Performance_Y', 
         z='Volumen_Z',
         color='Anzeige_Hersteller',
+        # FEHLERBEHEBUNG: hover_name hinzugefügt, damit der Modellname im Tooltip des Plots angezeigt wird
+        hover_name='Vollständiges_Modell',
         color_discrete_map=MANUFACTURER_COLORS,
         title=None, 
         labels={
@@ -323,7 +325,6 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
     fig.update_layout(scene=dict(xaxis=dict(range=[0.5, 10.5]), yaxis=dict(range=[0.5, 10.5]), zaxis=dict(range=[0.5, 10.5])))
 
     # Aktualisierung der DataTable-Daten
-    # Hinzufügen der Spalte 'Anzeige_Hersteller' für die bedingte Formatierung (wird in app.layout versteckt)
     table_data = df_filtered[['Vollständiges_Modell', 'Schuhmodell', 'Anzeige_Hersteller']].to_dict('records')
     
     # Aktualisierung der Tooltip-Daten (ohne Achsen-Namen)
