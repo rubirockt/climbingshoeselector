@@ -243,7 +243,8 @@ app.layout = dbc.Container([
                                 className="text-center",
                                 children=[
                                     html.H3(id='shoe-full-name', children='Scarpa Drago', style={'cursor': 'pointer'}),
-                                    dcc.Tooltip(
+                                    # KORREKTUR: dcc.Tooltip wurde zu dbc.Tooltip geändert
+                                    dbc.Tooltip( 
                                         id='shoe-name-tooltip',
                                         target='shoe-full-name',
                                         placement='top'
