@@ -87,6 +87,9 @@ def load_climbing_shoe_data(filepath, manufacturer_colors):
         df['Anzeige_Hersteller'] = df['Hersteller'].apply(get_display_manufacturer)
         df['Farbcode'] = df['Anzeige_Hersteller'].map(manufacturer_colors)
         
+        # --- NEUE SPALTE FÜR EINZELSPALTEN-ANZEIGE (Punkt 3) ---
+        df['Vollständiges_Modell'] = df['Anzeige_Hersteller'] + ' ' + df['Schuhmodell']
+        
         return df
 
     except FileNotFoundError:
@@ -109,7 +112,6 @@ if DF_SHOES.empty:
     raise Exception("Anwendung konnte aufgrund fehlender oder fehlerhafter Schuhdaten nicht gestartet werden.")
 
 # --- Dash App Setup ---
-# Registriert den Ordner 'assets' für statische Dateien (z.B. Placeholder-Bild)
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # URL für das graue Rechteck (wird in assets/placeholder.svg erwartet)
@@ -123,18 +125,14 @@ def create_tooltip_data(df_filtered):
     # Tooltip-Inhalte für jede Zeile
     for index, row in df_filtered.iterrows():
         tooltip_item = {}
-        # Der Tooltip wird nur für die Spalte 'Schuhmodell' angezeigt
-        tooltip_item['Schuhmodell'] = {
+        # Der Tooltip wird nur für die Spalte 'Vollständiges_Modell' angezeigt
+        tooltip_item['Vollständiges_Modell'] = {
             'value': (
+                f"Hersteller: {row['Anzeige_Hersteller']}\n"
                 f"Support (X): {row['Support_X']:.1f}\n"
                 f"Performance (Y): {row['Performance_Y']:.1f}\n"
                 f"Volumen (Z): {row['Volumen_Z']:.1f}"
             ),
-            'type': 'markdown'
-        }
-        # Füge auch den Hersteller als Tooltip hinzu
-        tooltip_item['Hersteller'] = {
-            'value': f"Original Hersteller: {row['Hersteller']}",
             'type': 'markdown'
         }
         tooltip_data.append(tooltip_item)
@@ -144,7 +142,16 @@ def create_tooltip_data(df_filtered):
 app.layout = dbc.Container([
     html.H1("3D Kletterschuh-Finder (Support vs. Performance vs. Volumen)", className="my-4 text-center"),
     
-    # Haupt-Reihe: Aufgeteilt in 3 Spalten (Filter, DataTable & Bildvorschau)
+    # --- BLOCK 1: 3D Plot (JETZT OBEN) (Punkt 1) ---
+    dbc.Row([
+        dbc.Col(
+            dcc.Graph(id='3d-scatter-plot', style={'height': '70vh'}, className="mt-4"), 
+            width=12,
+            className="p-4"
+        )
+    ]), # g-4 entfernt unnötige Gutter
+    
+    # --- BLOCK 2: Filter, Liste und Bildvorschau (JETZT UNTEN) (Punkt 1) ---
     dbc.Row([ 
         # Spalte 1: Filter-Regler (Linke Seite)
         dbc.Col([
@@ -198,20 +205,28 @@ app.layout = dbc.Container([
                         children=[
                             dash_table.DataTable(
                                 id='shoes-table',
+                                # --- NUR NOCH EINE SICHTBARE SPALTE (Punkt 3) ---
+                                # 'Schuhmodell' wird nur für die interne Logik übergeben und versteckt
                                 columns=[
-                                    {"name": "Modell", "id": "Schuhmodell"},
-                                    {"name": "Hersteller", "id": "Anzeige_Hersteller"},
+                                    {"name": "Modell", "id": "Vollständiges_Modell"},
+                                    {"name": "Schuhmodell", "id": "Schuhmodell", "hidden": True} 
                                 ],
-                                data=DF_SHOES[['Schuhmodell', 'Anzeige_Hersteller']].to_dict('records'),
+                                data=DF_SHOES[['Vollständiges_Modell', 'Schuhmodell']].to_dict('records'),
                                 style_header={
                                     'backgroundColor': 'rgb(230, 230, 230)',
                                     'fontWeight': 'bold'
                                 },
-                                style_table={'overflowY': 'auto'}, 
-                                row_selectable='single',
+                                # --- MAX HÖHE UND SCROLLBAR (Punkt 2) ---
+                                style_table={'overflowY': 'scroll', 'maxHeight': '400px'}, 
+                                # Versteckt die Radio-Buttons und erlaubt Auswahl per Klick (Punkt 4)
+                                row_selectable='single', 
                                 selected_rows=[0], 
                                 tooltip_data=create_tooltip_data(DF_SHOES),
-                                tooltip_duration=None 
+                                tooltip_duration=None,
+                                # --- SPALTE VERSTECKEN ---
+                                style_data_conditional=[
+                                    {'if': {'column_id': 'Schuhmodell'}, 'display': 'none'} 
+                                ]
                             )
                         ]
                     )
@@ -239,7 +254,6 @@ app.layout = dbc.Container([
                                 className="text-center",
                                 children=[
                                     html.H3(id='shoe-full-name', children='Scarpa Drago', style={'cursor': 'pointer'}),
-                                    # dbc.Tooltip (bereits korrigiert)
                                     dbc.Tooltip( 
                                         id='shoe-name-tooltip',
                                         target='shoe-full-name',
@@ -250,16 +264,9 @@ app.layout = dbc.Container([
                         ]
                     )
                 ], md=7, className="h-100 d-flex flex-column") # 7 von 12 Spalten der rechten Seite (ca. 60%)
-            ], className="g-0 h-100") # g-0 entfernt unnötige Gutter zwischen 5/7 Spalten
+            ], className="g-4 h-100") # g-4 beibehlten für Abstand
         ], md=8, className="p-4", style={'minHeight': '500px'}), # 8 von 12 Spalten für DataTable und Bildvorschau
-
-        # 3D Plot - Unter dem Filter- und Daten-Bereich
-        dbc.Col(
-            dcc.Graph(id='3d-scatter-plot', style={'height': '70vh'}, className="mt-4"), 
-            width=12,
-            className="p-4"
-        )
-    ], className="g-4")
+    ], className="g-4") # Haupt-Row Gutter
 ], fluid=True)
 
 
@@ -288,7 +295,7 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
         (DF_SHOES['Support_X'] >= support_range[0]) & (DF_SHOES['Support_X'] <= support_range[1]) &
         (DF_SHOES['Performance_Y'] >= performance_range[0]) & (DF_SHOES['Performance_Y'] <= performance_range[1]) &
         (DF_SHOES['Volumen_Z'] >= volume_range[0]) & (DF_SHOES['Volumen_Z'] <= volume_range[1]) &
-        # Sicherstellen, dass selected_manufacturers nicht None ist, da es sich um einen Multi-Select-Dropdown handelt
+        # Sicherstellen, dass selected_manufacturers nicht None ist
         (DF_SHOES['Anzeige_Hersteller'].isin(selected_manufacturers if selected_manufacturers is not None else []))
     ].copy()
 
@@ -300,14 +307,14 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
         z='Volumen_Z',
         color='Anzeige_Hersteller',
         color_discrete_map=MANUFACTURER_COLORS,
-        hover_data=['Schuhmodell', 'Hersteller', 'Support_X', 'Performance_Y', 'Volumen_Z'],
+        hover_data=['Vollständiges_Modell', 'Support_X', 'Performance_Y', 'Volumen_Z'],
         title="Kletterschuh-Positionierung",
         labels={'Support_X': 'Support (Steifigkeit)', 'Performance_Y': 'Performance (Aggressivität)', 'Volumen_Z': 'Volumen (Breite/Höhe)'}
     )
     fig.update_layout(scene=dict(xaxis=dict(range=[0.5, 10.5]), yaxis=dict(range=[0.5, 10.5]), zaxis=dict(range=[0.5, 10.5])))
 
-    # Aktualisierung der DataTable-Daten
-    table_data = df_filtered[['Schuhmodell', 'Anzeige_Hersteller']].to_dict('records')
+    # Aktualisierung der DataTable-Daten (Jetzt mit Vollständiges_Modell und dem versteckten Schuhmodell-Key)
+    table_data = df_filtered[['Vollständiges_Modell', 'Schuhmodell']].to_dict('records')
     
     # Aktualisierung der Tooltip-Daten
     tooltip_data = create_tooltip_data(df_filtered)
@@ -347,7 +354,7 @@ def update_image_preview(selected_rows, rows):
     # Holt den Index der ausgewählten Zeile
     row_index = selected_rows[0]
     
-    # Holt den Schuhnamen aus den aktuellen (gefilterten) Daten der Tabelle
+    # Holt den versteckten Schlüssel 'Schuhmodell' aus den aktuellen (gefilterten) Daten der Tabelle
     selected_shoe_model = rows[row_index]['Schuhmodell']
     
     # Findet die vollständige Zeile im vollständigen DF_SHOES
@@ -368,11 +375,12 @@ def update_image_preview(selected_rows, rows):
             image_src = PLACEHOLDER_IMAGE_URL
         
         # 2. Schuhname (Hersteller + Modell)
-        full_name = f"{shoe_data['Hersteller']} {shoe_data['Schuhmodell']}"
+        full_name = shoe_data['Vollständiges_Modell']
         
         # 3. Tooltip-Inhalt (Markdown-Format)
         tooltip_content = dcc.Markdown(
             f"**Eigenschaften:**\n"
+            f"Hersteller: **{shoe_data['Hersteller']}**\n"
             f"Support (X): **{shoe_data['Support_X']:.1f}**\n"
             f"Performance (Y): **{shoe_data['Performance_Y']:.1f}**\n"
             f"Volumen (Z): **{shoe_data['Volumen_Z']:.1f}**"
@@ -383,7 +391,5 @@ def update_image_preview(selected_rows, rows):
     # Fallback, wenn der Schuhname nicht im DF_SHOES gefunden wird (sollte nicht passieren)
     return PLACEHOLDER_IMAGE_URL, default_name, default_tooltip
 
-
 # --- Gunicorn/WSGI Server Fix ---
-# stellt sicher, dass Gunicorn das benötigte 'server'-Objekt findet.
 server = app.server
