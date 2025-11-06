@@ -4,7 +4,6 @@ import plotly.express as px
 from dash import dcc, html, dash_table
 import dash_bootstrap_components as dbc
 import os
-# NEU: Wir benötigen send_from_directory, um statische Dateien von außerhalb des 'assets/' Ordners zu servieren
 from flask import send_from_directory
 
 # --- 1. Konfigurations- und Datenladeroutinen ---
@@ -78,8 +77,11 @@ def load_climbing_shoe_data(filepath, manufacturer_colors):
         df['Anzeige_Hersteller'] = df['Hersteller'].apply(get_display_manufacturer)
         df['Farbcode'] = df['Anzeige_Hersteller'].map(manufacturer_colors)
         
-        # Spalte für Einzelsspalten-Anzeige
-        df['Vollständiges_Modell'] = df['Anzeige_Hersteller'] + ' ' + df['Schuhmodell']
+        # NEU: Spalte für formatierten Markdown-String für die DataTable (Hersteller in Farbe, Schuhmodell fett/schwarz)
+        df['Vollständiges_Modell'] = df.apply(
+            lambda row: f'<span style="color:{row["Farbcode"]};">{row["Anzeige_Hersteller"]}</span> **{row["Schuhmodell"]}**',
+            axis=1
+        )
         
         return df
 
@@ -108,17 +110,18 @@ PLACEHOLDER_IMAGE_URL = '/assets/placeholder.svg'
 
 # --- Funktionen für Tooltip-Erstellung (für die DataTable) ---
 def create_tooltip_data(df_filtered):
-    """Erstellt die Tooltip-Datenstruktur für die DataTable."""
+    """Erstellt die Tooltip-Datenstruktur für die DataTable ohne Achsen-Namen."""
     tooltip_data = []
     
     for index, row in df_filtered.iterrows():
         tooltip_item = {}
+        # Hinzufügen von Zeilenumbrüchen im Markdown-Tooltip und Entfernung der Achsen-Namen (X/Y/Z)
         tooltip_item['Vollständiges_Modell'] = {
             'value': (
-                f"Hersteller: {row['Anzeige_Hersteller']}\n"
-                f"Support (X): {row['Support_X']:.1f}\n"
-                f"Performance (Y): {row['Performance_Y']:.1f}\n"
-                f"Volumen (Z): {row['Volumen_Z']:.1f}"
+                f"Hersteller: {row['Anzeige_Hersteller']}\n\n"
+                f"Support: {row['Support_X']:.1f}\n\n"
+                f"Performance: {row['Performance_Y']:.1f}\n\n"
+                f"Volumen: {row['Volumen_Z']:.1f}"
             ),
             'type': 'markdown'
         }
@@ -142,13 +145,13 @@ app.layout = dbc.Container([
     
     # --- BLOCK 2: Filter, Liste und Bildvorschau (UNTEN) ---
     dbc.Row([ 
-        # Spalte 1: Filter-Regler (Linke Seite)
+        # Spalte 1: Filter-Regler (Linke Seite) (Breite: 5/12)
         dbc.Col([
             html.Div(id='filter-container', children=[
-                # Reduzierte Schriftgröße
                 html.H4("Filterkriterien", className="mb-3", style={'fontSize': '1.05rem'}),
                 
-                html.Label("Minimaler Support (X-Achse)", className="mt-2"),
+                # NEU: Zentrierte Überschrift und vereinfachter Text
+                html.H5("Support", className="mt-2 text-center", style={'fontSize': '0.9rem'}),
                 dcc.RangeSlider(
                     id='support-slider',
                     min=1, max=10, step=0.1, value=[1, 10],
@@ -156,7 +159,8 @@ app.layout = dbc.Container([
                     tooltip={"placement": "bottom", "always_visible": True}
                 ),
                 
-                html.Label("Minimale Performance (Y-Achse)", className="mt-4"),
+                # NEU: Zentrierte Überschrift und vereinfachter Text
+                html.H5("Performance", className="mt-4 text-center", style={'fontSize': '0.9rem'}),
                 dcc.RangeSlider(
                     id='performance-slider',
                     min=1, max=10, step=0.1, value=[1, 10],
@@ -164,7 +168,8 @@ app.layout = dbc.Container([
                     tooltip={"placement": "bottom", "always_visible": True}
                 ),
                 
-                html.Label("Minimales Volumen (Z-Achse)", className="mt-4"),
+                # NEU: Zentrierte Überschrift und vereinfachter Text
+                html.H5("Volumen", className="mt-4 text-center", style={'fontSize': '0.9rem'}),
                 dcc.RangeSlider(
                     id='volume-slider',
                     min=1, max=10, step=0.1, value=[1, 10],
@@ -181,54 +186,54 @@ app.layout = dbc.Container([
                     className="mt-2"
                 )
             ])
-        ], md=4, className="p-4 bg-light rounded-3 shadow-sm", style={'minHeight': '500px'}), 
+        ], md=5, className="p-4 bg-light rounded-3 shadow-sm", style={'minHeight': '500px'}), 
 
-        # Spalte 2: Dynamische Liste und Bildvorschau (Rechte Seite)
+        # Spalte 2: Dynamische Liste und Bildvorschau (Rechte Seite) (Breite: 7/12)
         dbc.Col([
             dbc.Row([
-                # Unterspalte 2.1: DataTable (40% der rechten Spalte)
+                # Unterspalte 2.1: DataTable (Breite: 7/12 der rechten Spalte)
                 dbc.Col([
-                    # Reduzierte Schriftgröße
-                    html.H4("Gefilterte Modelle", className="mb-2", style={'fontSize': '1.05rem'}),
+                    # NEU: Tabellenüberschrift geändert
+                    html.H4("Ggeeignete Modelle", className="mb-2", style={'fontSize': '1.05rem'}),
                     html.Div(
                         id='filtered-list-container',
                         style={'height': '100%', 'overflowY': 'auto'}, 
                         children=[
                             dash_table.DataTable(
                                 id='shoes-table',
-                                # Nur die Vollständiges_Modell Spalte wird definiert
                                 columns=[
-                                    {"name": "Modell", "id": "Vollständiges_Modell"},
-                                    # Schuhmodell ist nicht sichtbar, aber im data-Array enthalten für den Callback
+                                    {"name": "Modell", "id": "Vollständiges_Modell", "presentation": "markdown"}, # Hinzugefügt: presentation: "markdown"
                                 ],
-                                # Daten enthalten den Schlüssel 'Schuhmodell' für die Callback-Logik
                                 data=DF_SHOES[['Vollständiges_Modell', 'Schuhmodell']].to_dict('records'),
                                 
-                                # Spaltenüberschriftenzeile entfernen
                                 style_header={'display': 'none'},
-
-                                # Max Höhe und Scrollbar
-                                style_table={'overflowY': 'scroll', 'maxHeight': '400px', 'width': '100%'}, 
+                                style_table={'overflowY': 'scroll', 'maxHeight': '320px', 'width': '100%'}, 
                                 
-                                # Auswahl per Klick (ohne sichtbare Radio-Buttons)
                                 row_selectable='single', 
                                 selected_rows=[0], 
                                 tooltip_data=create_tooltip_data(DF_SHOES),
                                 tooltip_duration=None,
                                 
-                                # Schriftgröße der Listeneinträge reduzieren
+                                # NEU: Schriftgröße auf 12pt reduziert
                                 style_data={
-                                    'fontSize': '14pt', # Reduziert
-                                    'padding': '5px 10px' # Reduziertes Padding für kompakte Optik
+                                    'fontSize': '12pt', 
+                                    'padding': '5px 10px' 
                                 },
+                                
+                                # NEU: Ermöglicht das Rendern von Markdown in der Zelle
+                                style_as_list_view=True,
+                                
+                                # Bedingung, um Leerzeichen im Markdown-Rendern zu erzwingen
+                                style_data_conditional=[
+                                    {'if': {'row_index': 'odd'}, 'backgroundColor': 'rgb(248, 248, 248)'}
+                                ],
                             )
                         ]
                     )
-                ], md=5, className="h-100 d-flex flex-column"), 
+                ], md=7, className="h-100 d-flex flex-column"), 
 
-                # Unterspalte 2.2: Bildvorschau (60% der rechten Spalte)
+                # Unterspalte 2.2: Bildvorschau (Breite: 5/12 der rechten Spalte)
                 dbc.Col([
-                    # Reduzierte Schriftgröße
                     html.H4("Modell-Vorschau", className="mb-2", style={'fontSize': '1.05rem'}),
                     html.Div(
                         id='image-display-area',
@@ -256,9 +261,9 @@ app.layout = dbc.Container([
                             )
                         ]
                     )
-                ], md=7, className="h-100 d-flex flex-column")
+                ], md=5, className="h-100 d-flex flex-column")
             ], className="g-4 h-100") 
-        ], md=8, className="p-4", style={'minHeight': '500px'}), 
+        ], md=7, className="p-4", style={'minHeight': '500px'}), 
     ], className="g-4")
 ], fluid=True)
 
@@ -298,16 +303,23 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
         z='Volumen_Z',
         color='Anzeige_Hersteller',
         color_discrete_map=MANUFACTURER_COLORS,
-        hover_data=['Vollständiges_Modell', 'Support_X', 'Performance_Y', 'Volumen_Z'],
-        title="Kletterschuh-Positionierung",
-        labels={'Support_X': 'Support (Steifigkeit)', 'Performance_Y': 'Performance (Aggressivität)', 'Volumen_Z': 'Volumen (Breite/Höhe)'}
+        # NEU: Titel entfernt
+        title=None, 
+        # NEU: Legenden-Titel geändert
+        labels={
+            'Support_X': 'Support (Steifigkeit)', 
+            'Performance_Y': 'Performance (Aggressivität)', 
+            'Volumen_Z': 'Volumen (Breite/Höhe)',
+            'Anzeige_Hersteller': 'Marke'
+        }
     )
     fig.update_layout(scene=dict(xaxis=dict(range=[0.5, 10.5]), yaxis=dict(range=[0.5, 10.5]), zaxis=dict(range=[0.5, 10.5])))
 
     # Aktualisierung der DataTable-Daten
+    # Stelle sicher, dass der Vollständiges_Modell String hier der formattierte Markdown-String ist
     table_data = df_filtered[['Vollständiges_Modell', 'Schuhmodell']].to_dict('records')
     
-    # Aktualisierung der Tooltip-Daten
+    # Aktualisierung der Tooltip-Daten (ohne Achsen-Namen)
     tooltip_data = create_tooltip_data(df_filtered)
 
     # Versuch, die Auswahl beizubehalten, ansonsten Standard auf erste Zeile
@@ -341,11 +353,7 @@ def update_image_preview(selected_rows, rows):
 
     row_index = selected_rows[0]
     
-    # Holt den Schlüssel 'Schuhmodell' aus den Daten
-    # WICHTIG: Die Spalte 'Schuhmodell' ist zwar nicht sichtbar, aber im 'rows' Daten-Array enthalten.
     selected_shoe_model = rows[row_index]['Schuhmodell']
-    
-    # Findet die vollständige Zeile im DF_SHOES
     shoe_row = DF_SHOES[DF_SHOES['Schuhmodell'] == selected_shoe_model]
 
     if not shoe_row.empty:
@@ -355,21 +363,23 @@ def update_image_preview(selected_rows, rows):
         image_filename = shoe_data['Bildpfad']
         if image_filename and pd.notna(image_filename):
             full_image_url = os.path.join(CONFIG['IMAGE_ASSET_URL_BASE'], image_filename)
-            # URL-Pfad für den Browser
             image_src = full_image_url.replace('\\', '/').replace('//', '/')
         else:
             image_src = PLACEHOLDER_IMAGE_URL
         
-        # 2. Schuhname (Verwendet Vollständiges_Modell)
-        full_name = shoe_data['Vollständiges_Modell']
+        # 2. Schuhname (Verwendet Vollständiges_Modell, welches formatierten Markdown enthält)
+        # Wenn der H3-Titel den formatierten Markdown-String erhält, wird er als HTML gerendert
+        # Wir müssen hier den unformatierten String für den H3 verwenden, oder ihn parsen,
+        # Da H3 keinen Markdown unterstützt. Wir verwenden den unformatierten String des Modells:
+        full_name = f"{shoe_data['Anzeige_Hersteller']} {shoe_data['Schuhmodell']}"
         
-        # 3. Tooltip-Inhalt
+        # 3. Tooltip-Inhalt (ohne Achsen-Namen, mit Zeilenumbrüchen)
         tooltip_content = dcc.Markdown(
-            f"**Eigenschaften:**\n"
-            f"Hersteller: **{shoe_data['Hersteller']}**\n"
-            f"Support (X): **{shoe_data['Support_X']:.1f}**\n"
-            f"Performance (Y): **{shoe_data['Performance_Y']:.1f}**\n"
-            f"Volumen (Z): **{shoe_data['Volumen_Z']:.1f}**"
+            f"**Eigenschaften:**\n\n" # Doppeltes \n für Zeilenumbruch im Markdown
+            f"Hersteller: **{shoe_data['Hersteller']}**\n\n"
+            f"Support: **{shoe_data['Support_X']:.1f}**\n\n"
+            f"Performance: **{shoe_data['Performance_Y']:.1f}**\n\n"
+            f"Volumen: **{shoe_data['Volumen_Z']:.1f}**"
         )
 
         return image_src, full_name, tooltip_content
@@ -380,12 +390,6 @@ def update_image_preview(selected_rows, rows):
 # --- Gunicorn/WSGI Server Fix und NEUE ROUTE ---
 server = app.server
 
-# NEU: Definiert eine statische Route im zugrundeliegenden Flask-Server,
-# die den URL-Pfad "/data/<Dateiname>" dem lokalen Verzeichnis "data/" zuordnet.
-# Dies ist notwendig, da Dash nur "assets/" standardmäßig exponiert.
-# Die Pfad-Variable 'path' nimmt alles nach '/data/' auf (z.B. 'images/38.png').
 @server.route(f"/{CONFIG['DATA_DIR']}<path:path>")
 def serve_static(path):
-    # send_from_directory sucht nach der Datei im lokalen CONFIG['DATA_DIR'] ('data/')
-    # und sendet sie an den Browser.
     return send_from_directory(CONFIG['DATA_DIR'], path)
