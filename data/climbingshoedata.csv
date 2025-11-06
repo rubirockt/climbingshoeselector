@@ -1,85 +1,85 @@
-Schuhmodell,Hersteller,Support_X,Performance_Y,Volumen_Z,Toe
-Miura,La Sportiva,7.0,8.0,1.0,N/A
-Futura,La Sportiva,4.0,8.8,5.5,N/A
-Katana,La Sportiva,7.0,5.0,5.5,N/A
-Katana Laces,La Sportiva,10.0,8.0,5.5,N/A
-Kataki,La Sportiva,7.6,7.8,1.0,N/A
-Python,La Sportiva,5.5,7.5,6.4,N/A
-Cobra,La Sportiva,4.0,5.5,5.5,N/A
-Solution Comp,La Sportiva,4.6,9.8,5.5,N/A
-Solution,La Sportiva,7.0,9.0,5.5,N/A
-Theory,La Sportiva,4.0,10.0,5.5,N/A
-Cobra 4:99,La Sportiva,5.5,7.0,5.5,N/A
-Skwama,La Sportiva,4.0,8.0,5.5,N/A
-TC Pro,La Sportiva,10.0,9.5,5.5,N/A
-Testarossa,La Sportiva,8.5,9.5,10.0,N/A
-Speedster,La Sportiva,1.0,9.8,5.5,N/A
-Miura VS,La Sportiva,10.0,9.2,10.0,N/A
-Finale,La Sportiva,7.0,5.0,5.5,N/A
-Zenit,La Sportiva,7.0,6.0,5.5,N/A
-Mythos,La Sportiva,8.5,4.0,7.8,N/A
-Mythos Eco,La Sportiva,8.5,4.2,7.6,N/A
-Cobra Eco,La Sportiva,5.5,5.8,5.5,N/A
-Tarantulace,La Sportiva,7.0,2.0,7.8,N/A
-Tarantula,La Sportiva,7.5,2.0,10.0,N/A
-Aragon,La Sportiva,7.0,2.7,10.0,N/A
-Finale VS,La Sportiva,7.0,4.8,10.0,N/A
-Gekko,La Sportiva,0.5,1.0,5.5,N/A
-Stickit,La Sportiva,1.0,1.0,5.5,N/A
-Tarantula JR,La Sportiva,7.0,1.0,7.8,N/A
-Tarantula RN,La Sportiva,7.0,1.0,7.8,N/A
-Miura XX,La Sportiva,10.0,10.0,1.0,N/A
-Kubo,La Sportiva,4.5,4.5,5.0,N/A
-Tarantula Boulder,La Sportiva,4.5,1.4,7.0,N/A
-Mantra,La Sportiva,1.0,7.5,4.0,N/A
-Skwama Vegan,La Sportiva,4.0,7.2,6.5,N/A
-Mistral,La Sportiva,5.5,4.0,5.0,N/A
-Otaki,La Sportiva,8.5,7.0,5.5,N/A
-Genius,La Sportiva,4.3,8.2,7.0,N/A
-Mago,Scarpa,6.5,8.5,5.5,Classic
-Booster,Scarpa,5.0,8.5,6.5,Classic
-Drago,Scarpa,2.0,8.5,3.5,Classic
-Drago LV,Scarpa,2.0,8.5,2.5,Classic
-Chimera,Scarpa,5.5,7.5,4.5,Classic
-Furia Air,Scarpa,2.0,8.5,3.0,Classic
-Instinct S,Scarpa,5.0,8.5,3.8,Centre
-Instinct VS,Scarpa,6.5,8.5,8.0,Centre
-Instinct VSR,Scarpa,4.0,8.5,8.0,Centre
-Instinct Wmn,Scarpa,6.0,8.5,5.5,Centre
-Instinct VS Wmn,Scarpa,4.3,8.5,3.0,Centre
-Force,Scarpa,7.5,5.5,6.5,Centre
-Force Wmn,Scarpa,6.5,5.5,4.3,Centre
-Helix,Scarpa,6.5,5.0,4.8,Centre
-Helix Wmn,Scarpa,6.5,5.0,3.5,Centre
-Origin,Scarpa,6.5,3.3,6.0,Centre
-Origin Wmn,Scarpa,6.5,3.3,5.2,Centre
-Origin VS,Scarpa,4.0,3.8,5.5,Centre
-Origin VS Wmn,Scarpa,4.0,3.8,4.0,Centre
-Reflex - Y,Scarpa,4.0,5.0,5.5,Centre
-Reflex VS,Scarpa,6.5,4.3,5.2,Centre
-Reflex VS Wmn,Scarpa,6.5,5.0,5.5,Centre
-Pik! - Y,Scarpa,4.0,5.5,8.0,Centre
-Veloce,Scarpa,2.0,5.0,8.0,Square
-Veloce L,Scarpa,6.5,5.0,8.0,Square
-Veloce Wmn,Scarpa,2.0,5.0,6.5,Square
-Veloce L Wmn,Scarpa,6.5,5.0,8.0,Square
-Generator,Scarpa,8.6,8.5,5.0,Centre
-Generator Mid,Scarpa,9.2,8.5,5.0,Centre
-Generator Wmn,Scarpa,8.6,8.5,4.2,Centre
-Generator Mid Wmn,Scarpa,9.2,8.5,4.2,Centre
-Vapor S,Scarpa,6.5,9.0,3.5,Centre
-Vapor S Wmn,Scarpa,6.5,9.0,2.5,Centre
-Vapor V,Scarpa,6.5,9.0,3.5,Centre
-Vapor V LV,Scarpa,6.5,9.0,2.5,Centre
-Arpia V,Scarpa,6.5,5.5,8.0,Centre
-Arpia V LV,Scarpa,6.5,6.5,4.5,Centre
-Vapor,Scarpa,9.0,5.5,3.2,Centre
-Vapor WMN,Scarpa,9.0,5.5,2.8,Centre
-Generator V,Scarpa,9.0,5.0,5.5,Classic
-Generator V WMN,Scarpa,9.0,5.0,5.5,Classic
-Boostic,Scarpa,7.5,8.5,4.8,Classic
-Boostic R,Scarpa,9.0,8.5,3.0,Classic
-Drago - Y,Scarpa,2.0,8.5,3.0,Classic
-Drago XT,Scarpa,1.5,8.5,4.0,Classic
-Instinct VSR LV,Scarpa,4.0,8.5,6.0,Centre
-Instinct,Scarpa,6.5,8.5,5.5,Centre
+id,Schuhmodell,Hersteller,Support_X,Performance_Y,Volumen_Z,Toe,Bildpfad
+1,Miura,La Sportiva,7.0,8.0,1.0,N/A,miura.jpg
+2,Futura,La Sportiva,4.0,8.8,5.5,N/A,futura.jpg
+3,Katana,La Sportiva,7.0,5.0,5.5,N/A,katana.jpg
+4,Katana Laces,La Sportiva,10.0,8.0,5.5,N/A,katana_laces.jpg
+5,Kataki,La Sportiva,7.6,7.8,1.0,N/A,kataki.jpg
+6,Python,La Sportiva,5.5,7.5,6.4,N/A,python.jpg
+7,Cobra,La Sportiva,4.0,5.5,5.5,N/A,cobra.jpg
+8,Solution Comp,La Sportiva,4.6,9.8,5.5,N/A,solution_comp.jpg
+9,Solution,La Sportiva,7.0,9.0,5.5,N/A,solution.jpg
+10,Theory,La Sportiva,4.0,10.0,5.5,N/A,theory.jpg
+11,Cobra 4:99,La Sportiva,5.5,7.0,5.5,N/A,cobra_499.jpg
+12,Skwama,La Sportiva,4.0,8.0,5.5,N/A,skwama.jpg
+13,TC Pro,La Sportiva,10.0,9.5,5.5,N/A,tc_pro.jpg
+14,Testarossa,La Sportiva,8.5,9.5,10.0,N/A,testarossa.jpg
+15,Speedster,La Sportiva,1.0,9.8,5.5,N/A,speedster.jpg
+16,Miura VS,La Sportiva,10.0,9.2,10.0,N/A,miura_vs.jpg
+17,Finale,La Sportiva,7.0,5.0,5.5,N/A,finale.jpg
+18,Zenit,La Sportiva,7.0,6.0,5.5,N/A,zenit.jpg
+19,Mythos,La Sportiva,8.5,4.0,7.8,N/A,mythos.jpg
+20,Mythos Eco,La Sportiva,8.5,4.2,7.6,N/A,mythos_eco.jpg
+21,Cobra Eco,La Sportiva,5.5,5.8,5.5,N/A,cobra_eco.jpg
+22,Tarantulace,La Sportiva,7.0,2.0,7.8,N/A,tarantulace.jpg
+23,Tarantula,La Sportiva,7.5,2.0,10.0,N/A,tarantula.jpg
+24,Aragon,La Sportiva,7.0,2.7,10.0,N/A,aragon.jpg
+25,Finale VS,La Sportiva,7.0,4.8,10.0,N/A,finale_vs.jpg
+26,Gekko,La Sportiva,0.5,1.0,5.5,N/A,gekko.jpg
+27,Stickit,La Sportiva,1.0,1.0,5.5,N/A,stickit.jpg
+28,Tarantula JR,La Sportiva,7.0,1.0,7.8,N/A,tarantula_jr.jpg
+29,Tarantula RN,La Sportiva,7.0,1.0,7.8,N/A,tarantula_rn.jpg
+30,Miura XX,La Sportiva,10.0,10.0,1.0,N/A,miura_xx.jpg
+31,Kubo,La Sportiva,4.5,4.5,5.0,N/A,kubo.jpg
+32,Tarantula Boulder,La Sportiva,4.5,1.4,7.0,N/A,tarantula_boulder.jpg
+33,Mantra,La Sportiva,1.0,7.5,4.0,N/A,mantra.jpg
+34,Skwama Vegan,La Sportiva,4.0,7.2,6.5,N/A,skwama_vegan.jpg
+35,Mistral,La Sportiva,5.5,4.0,5.0,N/A,mistral.jpg
+36,Otaki,La Sportiva,8.5,7.0,5.5,N/A,otaki.jpg
+37,Genius,La Sportiva,4.3,8.2,7.0,N/A,genius.jpg
+38,Mago,Scarpa,6.5,8.5,5.5,Classic,mago.jpg
+39,Booster,Scarpa,5.0,8.5,6.5,Classic,booster.jpg
+40,Drago,Scarpa,2.0,8.5,3.5,Classic,drago.jpg
+41,Drago LV,Scarpa,2.0,8.5,2.5,Classic,drago_lv.jpg
+42,Chimera,Scarpa,5.5,7.5,4.5,Classic,chimera.jpg
+43,Furia Air,Scarpa,2.0,8.5,3.0,Classic,furia_air.jpg
+44,Instinct S,Scarpa,5.0,8.5,3.8,Centre,instinct_s.jpg
+45,Instinct VS,Scarpa,6.5,8.5,8.0,Centre,instinct_vs.jpg
+46,Instinct VSR,Scarpa,4.0,8.5,8.0,Centre,instinct_vsr.jpg
+47,Instinct Wmn,Scarpa,6.0,8.5,5.5,Centre,instinct_wmn.jpg
+48,Instinct VS Wmn,Scarpa,4.3,8.5,3.0,Centre,instinct_vs_wmn.jpg
+49,Force,Scarpa,7.5,5.5,6.5,Centre,force.jpg
+50,Force Wmn,Scarpa,6.5,5.5,4.3,Centre,force_wmn.jpg
+51,Helix,Scarpa,6.5,5.0,4.8,Centre,helix.jpg
+52,Helix Wmn,Scarpa,6.5,5.0,3.5,Centre,helix_wmn.jpg
+53,Origin,Scarpa,6.5,3.3,6.0,Centre,origin.jpg
+54,Origin Wmn,Scarpa,6.5,3.3,5.2,Centre,origin_wmn.jpg
+55,Origin VS,Scarpa,4.0,3.8,5.5,Centre,origin_vs.jpg
+56,Origin VS Wmn,Scarpa,4.0,3.8,4.0,Centre,origin_vs_wmn.jpg
+57,Reflex - Y,Scarpa,4.0,5.0,5.5,Centre,reflex_y.jpg
+58,Reflex VS,Scarpa,6.5,4.3,5.2,Centre,reflex_vs.jpg
+59,Reflex VS Wmn,Scarpa,6.5,5.0,5.5,Centre,reflex_vs_wmn.jpg
+60,Pik! - Y,Scarpa,4.0,5.5,8.0,Centre,pik_y.jpg
+61,Veloce,Scarpa,2.0,5.0,8.0,Square,veloce.jpg
+62,Veloce L,Scarpa,6.5,5.0,8.0,Square,veloce_l.jpg
+63,Veloce Wmn,Scarpa,2.0,5.0,6.5,Square,veloce_wmn.jpg
+64,Veloce L Wmn,Scarpa,6.5,5.0,8.0,Square,veloce_l_wmn.jpg
+65,Generator,Scarpa,8.6,8.5,5.0,Centre,generator.jpg
+66,Generator Mid,Scarpa,9.2,8.5,5.0,Centre,generator_mid.jpg
+67,Generator Wmn,Scarpa,8.6,8.5,4.2,Centre,generator_wmn.jpg
+68,Generator Mid Wmn,Scarpa,9.2,8.5,4.2,Centre,generator_mid_wmn.jpg
+69,Vapor S,Scarpa,6.5,9.0,3.5,Centre,vapor_s.jpg
+70,Vapor S Wmn,Scarpa,6.5,9.0,2.5,Centre,vapor_s_wmn.jpg
+71,Vapor V,Scarpa,6.5,9.0,3.5,Centre,vapor_v.jpg
+72,Vapor V LV,Scarpa,6.5,9.0,2.5,Centre,vapor_v_lv.jpg
+73,Arpia V,Scarpa,6.5,5.5,8.0,Centre,arpia_v.jpg
+74,Arpia V LV,Scarpa,6.5,6.5,4.5,Centre,arpia_v_lv.jpg
+75,Vapor,Scarpa,9.0,5.5,3.2,Centre,vapor.jpg
+76,Vapor WMN,Scarpa,9.0,5.5,2.8,Centre,vapor_wmn.jpg
+77,Generator V,Scarpa,9.0,5.0,5.5,Classic,generator_v.jpg
+78,Generator V WMN,Scarpa,9.0,5.0,5.5,Classic,generator_v_wmn.jpg
+79,Boostic,Scarpa,7.5,8.5,4.8,Classic,boostic.jpg
+80,Boostic R,Scarpa,9.0,8.5,3.0,Classic,boostic_r.jpg
+41,Drago - Y,Scarpa,2.0,8.5,3.0,Classic,drago_y.jpg
+42,Drago XT,Scarpa,1.5,8.5,4.0,Classic,drago_xt.jpg
+43,Instinct VSR LV,Scarpa,4.0,8.5,6.0,Centre,instinct_vsr_lv.jpg
+44,Instinct,Scarpa,6.5,8.5,5.5,Centre,instinct.jpg
