@@ -145,7 +145,8 @@ app.layout = dbc.Container([
     html.H1("3D Kletterschuh-Finder (Support vs. Performance vs. Volumen)", className="my-4 text-center"),
     
     # Haupt-Reihe: Aufgeteilt in 3 Spalten (Filter, DataTable & Bildvorschau)
-    dbc.Row([
+    # FIX: minHeight hinzugefügt, um zu verhindern, dass die Col-Elemente kollabieren
+    dbc.Row([ 
         # Spalte 1: Filter-Regler (Linke Seite)
         dbc.Col([
             html.Div(id='filter-container', children=[
@@ -176,16 +177,16 @@ app.layout = dbc.Container([
                 ),
 
                 html.Label("Hersteller filtern", className="mt-4"),
-                dcc.Checklist(
+                # FIX: dcc.Checklist durch dcc.Dropdown (Multi-Select) ersetzt
+                dcc.Dropdown(
                     id='manufacturer-checklist',
                     options=[{'label': m, 'value': m} for m in sorted(DF_SHOES['Anzeige_Hersteller'].unique())],
                     value=sorted(DF_SHOES['Anzeige_Hersteller'].unique()),
-                    inline=False,
-                    className="mt-2",
-                    labelStyle={'display': 'block'}
+                    multi=True,
+                    className="mt-2"
                 )
             ])
-        ], md=4, className="p-4 bg-light rounded-3 shadow-sm"), # 4 von 12 Spalten für Filter
+        ], md=4, className="p-4 bg-light rounded-3 shadow-sm", style={'minHeight': '500px'}), # 4 von 12 Spalten für Filter
 
         # Spalte 2: Dynamische Liste und Bildvorschau (Rechte Seite)
         dbc.Col([
@@ -195,8 +196,6 @@ app.layout = dbc.Container([
                     html.H4("Gefilterte Modelle", className="mb-2"),
                     html.Div(
                         id='filtered-list-container',
-                        # Die Höhe wird indirekt über die Höhe der Filterspalte gesteuert
-                        # d.h. die Col-Höhe passt sich an, und dieses Div nimmt 100% davon
                         style={'height': '100%', 'overflowY': 'auto'}, 
                         children=[
                             dash_table.DataTable(
@@ -206,16 +205,15 @@ app.layout = dbc.Container([
                                     {"name": "Hersteller", "id": "Anzeige_Hersteller"},
                                 ],
                                 data=DF_SHOES[['Schuhmodell', 'Anzeige_Hersteller']].to_dict('records'),
-                                # Stil für Scrollbarkeit (Header fest, Body scrollt)
                                 style_header={
                                     'backgroundColor': 'rgb(230, 230, 230)',
                                     'fontWeight': 'bold'
                                 },
-                                style_table={'overflowY': 'auto'}, # Scrollt den Tabellenkörper
+                                style_table={'overflowY': 'auto'}, 
                                 row_selectable='single',
-                                selected_rows=[0], # Wählt standardmäßig den ersten Eintrag aus
+                                selected_rows=[0], 
                                 tooltip_data=create_tooltip_data(DF_SHOES),
-                                tooltip_duration=None # Bleibt sichtbar bis zum Mouse-Out
+                                tooltip_duration=None 
                             )
                         ]
                     )
@@ -226,7 +224,7 @@ app.layout = dbc.Container([
                     html.H4("Modell-Vorschau", className="mb-2"),
                     html.Div(
                         id='image-display-area',
-                        style={'height': 'calc(100% - 30px)'}, # Passt sich der Filterhöhe an
+                        style={'height': 'calc(100% - 30px)'}, 
                         children=[
                             # Container für das Bild (flexible Größe)
                             html.Div(
@@ -243,7 +241,7 @@ app.layout = dbc.Container([
                                 className="text-center",
                                 children=[
                                     html.H3(id='shoe-full-name', children='Scarpa Drago', style={'cursor': 'pointer'}),
-                                    # KORREKTUR: dcc.Tooltip wurde zu dbc.Tooltip geändert
+                                    # dbc.Tooltip (bereits korrigiert)
                                     dbc.Tooltip( 
                                         id='shoe-name-tooltip',
                                         target='shoe-full-name',
@@ -254,8 +252,8 @@ app.layout = dbc.Container([
                         ]
                     )
                 ], md=7, className="h-100 d-flex flex-column") # 7 von 12 Spalten der rechten Seite (ca. 60%)
-            ], className="h-100") # Stellt sicher, dass die Unterreihen die volle Höhe einnehmen
-        ], md=8, className="p-4"), # 8 von 12 Spalten für DataTable und Bildvorschau
+            ], className="g-0 h-100") # g-0 entfernt unnötige Gutter zwischen 5/7 Spalten
+        ], md=8, className="p-4", style={'minHeight': '500px'}), # 8 von 12 Spalten für DataTable und Bildvorschau
 
         # 3D Plot - Unter dem Filter- und Daten-Bereich
         dbc.Col(
@@ -292,7 +290,8 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
         (DF_SHOES['Support_X'] >= support_range[0]) & (DF_SHOES['Support_X'] <= support_range[1]) &
         (DF_SHOES['Performance_Y'] >= performance_range[0]) & (DF_SHOES['Performance_Y'] <= performance_range[1]) &
         (DF_SHOES['Volumen_Z'] >= volume_range[0]) & (DF_SHOES['Volumen_Z'] <= volume_range[1]) &
-        (DF_SHOES['Anzeige_Hersteller'].isin(selected_manufacturers))
+        # Sicherstellen, dass selected_manufacturers nicht None ist, da es sich um einen Multi-Select-Dropdown handelt
+        (DF_SHOES['Anzeige_Hersteller'].isin(selected_manufacturers if selected_manufacturers is not None else []))
     ].copy()
 
     # Erstellung des 3D-Plots
@@ -344,6 +343,7 @@ def update_image_preview(selected_rows, rows):
     
     # Prüft, ob eine Zeile ausgewählt wurde und Daten vorhanden sind
     if selected_rows is None or len(selected_rows) == 0 or len(rows) == 0:
+        # Gibt das leere Bild und den Standardnamen zurück
         return PLACEHOLDER_IMAGE_URL, default_name, default_tooltip
 
     # Holt den Index der ausgewählten Zeile
