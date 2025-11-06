@@ -63,8 +63,8 @@ id,Schuhmodell,Hersteller,Support_X,Performance_Y,Volumen_Z,Toe,Bildpfad
 62,Veloce L,Scarpa,6.5,5.0,8.0,Square,62.png
 63,Veloce Wmn,Scarpa,2.0,5.0,6.5,Square,63.png
 64,Veloce L Wmn,Scarpa,6.5,5.0,8.0,Square,64.png
-65,Generator,Scarpa,8.6,8.5,5.0,Centre,65.png
-66,Generator Mid,Scarpa,9.2,8.5,5.0,Centre,66.png
+65,Generator,Scarpa,8.6,5.0,5.0,Centre,65.png
+66,Generator Mid,Scarpa,9.2,5.0,5.0,Centre,66.png
 67,Generator Wmn,Scarpa,8.6,8.5,4.2,Centre,67.png
 68,Generator Mid Wmn,Scarpa,9.2,8.5,4.2,Centre,68.png
 69,Vapor S,Scarpa,5.0,5.8,3.5,Centre,69.png
