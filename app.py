@@ -145,7 +145,6 @@ app.layout = dbc.Container([
     html.H1("3D Kletterschuh-Finder (Support vs. Performance vs. Volumen)", className="my-4 text-center"),
     
     # Haupt-Reihe: Aufgeteilt in 3 Spalten (Filter, DataTable & Bildvorschau)
-    # FIX: minHeight hinzugefügt, um zu verhindern, dass die Col-Elemente kollabieren
     dbc.Row([ 
         # Spalte 1: Filter-Regler (Linke Seite)
         dbc.Col([
@@ -177,7 +176,6 @@ app.layout = dbc.Container([
                 ),
 
                 html.Label("Hersteller filtern", className="mt-4"),
-                # FIX: dcc.Checklist durch dcc.Dropdown (Multi-Select) ersetzt
                 dcc.Dropdown(
                     id='manufacturer-checklist',
                     options=[{'label': m, 'value': m} for m in sorted(DF_SHOES['Anzeige_Hersteller'].unique())],
@@ -384,3 +382,8 @@ def update_image_preview(selected_rows, rows):
     
     # Fallback, wenn der Schuhname nicht im DF_SHOES gefunden wird (sollte nicht passieren)
     return PLACEHOLDER_IMAGE_URL, default_name, default_tooltip
+
+
+# --- Gunicorn/WSGI Server Fix ---
+# stellt sicher, dass Gunicorn das benötigte 'server'-Objekt findet.
+server = app.server
