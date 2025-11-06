@@ -206,17 +206,16 @@ app.layout = dbc.Container([
                             dash_table.DataTable(
                                 id='shoes-table',
                                 columns=[
-                                    # Nur eine Spalte für die formatierte Anzeige
+                                    # Nur die kombinierte Spalte mit Hersteller und Modell wird angezeigt.
                                     {"name": "Modell", "id": "Formatierter_Modellname", "presentation": "markdown"},
-                                    # Wird versteckt, aber für den Lookup im Callback benötigt
-                                    {"name": "Modell", "id": "Schuhmodell", "hidden": True},
                                 ],
                                 # Daten werden im Callback aktualisiert
-                                data=DF_SHOES[['Formatierter_Modellname', 'Schuhmodell']].to_dict('records'),
+                                # Nur die Spalte 'Formatierter_Modellname' wird für die Tabelle vorbereitet
+                                data=DF_SHOES[['Formatierter_Modellname']].to_dict('records'),
                                 
                                 style_header={'display': 'none'}, # Überschriften weiterhin ausblenden
                                 
-                                # GEÄNDERT: marginTop/paddingTop auf 0px gesetzt, um Abstand zu eliminieren
+                                # marginTop/paddingTop auf 0px gesetzt, um Abstand zu eliminieren
                                 style_table={'overflowY': 'scroll', 'maxHeight': '380px', 'width': '100%', 'marginTop': '0px', 'paddingTop': '0px'}, 
                                 
                                 row_selectable='single', 
@@ -324,8 +323,8 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
     )
     fig.update_layout(scene=dict(xaxis=dict(range=[0.5, 10.5]), yaxis=dict(range=[0.5, 10.5]), zaxis=dict(range=[0.5, 10.5])))
 
-    # Aktualisierung der DataTable-Daten, nun mit der formatierten Spalte und der versteckten Modell ID
-    table_data = df_filtered[['Formatierter_Modellname', 'Schuhmodell']].to_dict('records')
+    # Aktualisierung der DataTable-Daten, nun nur mit der formatierten, kombinierten Spalte
+    table_data = df_filtered[['Formatierter_Modellname']].to_dict('records')
     
     # Aktualisierung der Tooltip-Daten
     tooltip_data = create_tooltip_data(df_filtered)
@@ -361,10 +360,11 @@ def update_image_preview(selected_rows, rows):
 
     row_index = selected_rows[0]
     
-    # Sicherstellung, dass wir den tatsächlichen Modellnamen (die versteckte Spalte) zur Suche verwenden
-    selected_shoe_model = rows[row_index]['Schuhmodell']
-    # Suche die vollständige Reihe im globalen DataFrame DF_SHOES anhand des Modellnamens
-    shoe_row = DF_SHOES[DF_SHOES['Schuhmodell'] == selected_shoe_model]
+    # Nutze den vollständig formatierten Namen der ausgewählten Zeile zur Suche
+    selected_formatted_name = rows[row_index]['Formatierter_Modellname']
+    
+    # Suche die vollständige Reihe im globalen DataFrame DF_SHOES anhand des formatierten Namens
+    shoe_row = DF_SHOES[DF_SHOES['Formatierter_Modellname'] == selected_formatted_name]
 
     if not shoe_row.empty:
         shoe_data = shoe_row.iloc[0]
