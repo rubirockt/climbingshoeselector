@@ -66,7 +66,7 @@ def load_climbing_shoe_data(filepath, manufacturer_colors):
         
         numeric_cols = ['Support_X', 'Performance_Y', 'Volumen_Z']
         for col in numeric_cols:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(5.5)
+            df[col] = pd.to_numeric(col, errors='coerce').fillna(5.5)
             df[col] = df[col].clip(lower=1.0, upper=10.0)
 
         df['Hersteller'] = df['Hersteller'].fillna('Not provided').astype(str)
@@ -77,11 +77,10 @@ def load_climbing_shoe_data(filepath, manufacturer_colors):
         df['Anzeige_Hersteller'] = df['Hersteller'].apply(get_display_manufacturer)
         df['Farbcode'] = df['Anzeige_Hersteller'].map(manufacturer_colors)
         
-        # NEU: Spalte für formatierten Markdown-String für die DataTable (Hersteller in Farbe, Schuhmodell fett/schwarz)
-        df['Vollständiges_Modell'] = df.apply(
-            lambda row: f'<span style="color:{row["Farbcode"]};">{row["Anzeige_Hersteller"]}</span> **{row["Schuhmodell"]}**',
-            axis=1
-        )
+        # BUG FIX: Entferne Markdown/HTML, um sichtbare Tags zu vermeiden.
+        # Verwenden Sie stattdessen eine einfache Textverkettung. Die Färbung 
+        # erfolgt über style_data_conditional.
+        df['Vollständiges_Modell'] = df['Anzeige_Hersteller'] + ' ' + df['Schuhmodell']
         
         return df
 
@@ -129,6 +128,16 @@ def create_tooltip_data(df_filtered):
     return tooltip_data
 
 # --- App Layout ---
+
+# Erstelle die Liste der bedingten Style-Regeln für die Herstellerfarben
+# Diese Liste wird verwendet, um die Farbe des gesamten Zelleintrags basierend auf dem Hersteller festzulegen.
+manufacturer_style_conditions = [
+    {
+        'if': {'filter_query': f'{{Anzeige_Hersteller}} eq "{m}"'},
+        'color': MANUFACTURER_COLORS.get(m, 'black')
+    } for m in MANUFACTURER_COLORS.keys()
+]
+
 app.layout = dbc.Container([
     # Geänderte Überschrift, reduzierte Schriftgröße und Abstand entfernt
     html.H1("Kletterschuh-Finder", className="mt-4 mb-0 text-center", style={'fontSize': '2.1rem'}),
@@ -150,7 +159,7 @@ app.layout = dbc.Container([
             html.Div(id='filter-container', children=[
                 html.H4("Filterkriterien", className="mb-3", style={'fontSize': '1.05rem'}),
                 
-                # NEU: Zentrierte Überschrift und vereinfachter Text
+                # Zentrierte Überschrift und vereinfachter Text
                 html.H5("Support", className="mt-2 text-center", style={'fontSize': '0.9rem'}),
                 dcc.RangeSlider(
                     id='support-slider',
@@ -159,7 +168,7 @@ app.layout = dbc.Container([
                     tooltip={"placement": "bottom", "always_visible": True}
                 ),
                 
-                # NEU: Zentrierte Überschrift und vereinfachter Text
+                # Zentrierte Überschrift und vereinfachter Text
                 html.H5("Performance", className="mt-4 text-center", style={'fontSize': '0.9rem'}),
                 dcc.RangeSlider(
                     id='performance-slider',
@@ -168,7 +177,7 @@ app.layout = dbc.Container([
                     tooltip={"placement": "bottom", "always_visible": True}
                 ),
                 
-                # NEU: Zentrierte Überschrift und vereinfachter Text
+                # Zentrierte Überschrift und vereinfachter Text
                 html.H5("Volumen", className="mt-4 text-center", style={'fontSize': '0.9rem'}),
                 dcc.RangeSlider(
                     id='volume-slider',
@@ -193,8 +202,8 @@ app.layout = dbc.Container([
             dbc.Row([
                 # Unterspalte 2.1: DataTable (Breite: 7/12 der rechten Spalte)
                 dbc.Col([
-                    # NEU: Tabellenüberschrift geändert
-                    html.H4("Ggeeignete Modelle", className="mb-2", style={'fontSize': '1.05rem'}),
+                    # NEU: Tabellenüberschrift korrigiert
+                    html.H4("Geeignete Modelle", className="mb-2", style={'fontSize': '1.05rem'}),
                     html.Div(
                         id='filtered-list-container',
                         style={'height': '100%', 'overflowY': 'auto'}, 
@@ -202,31 +211,31 @@ app.layout = dbc.Container([
                             dash_table.DataTable(
                                 id='shoes-table',
                                 columns=[
-                                    {"name": "Modell", "id": "Vollständiges_Modell", "presentation": "markdown"}, # Hinzugefügt: presentation: "markdown"
+                                    {"name": "Modell", "id": "Vollständiges_Modell"},
+                                    # Diese Spalte ist unsichtbar, wird aber für die bedingte Formatierung benötigt
+                                    {"name": "Hersteller", "id": "Anzeige_Hersteller", "hidden": True},
                                 ],
-                                data=DF_SHOES[['Vollständiges_Modell', 'Schuhmodell']].to_dict('records'),
+                                # Daten werden im Callback aktualisiert
+                                data=DF_SHOES[['Vollständiges_Modell', 'Schuhmodell', 'Anzeige_Hersteller']].to_dict('records'),
                                 
                                 style_header={'display': 'none'},
-                                style_table={'overflowY': 'scroll', 'maxHeight': '320px', 'width': '100%'}, 
+                                # NEU: Max Höhe auf 380px erhöht (ungefähr +1 Element)
+                                style_table={'overflowY': 'scroll', 'maxHeight': '380px', 'width': '100%'}, 
                                 
                                 row_selectable='single', 
                                 selected_rows=[0], 
                                 tooltip_data=create_tooltip_data(DF_SHOES),
                                 tooltip_duration=None,
                                 
-                                # NEU: Schriftgröße auf 12pt reduziert
                                 style_data={
                                     'fontSize': '12pt', 
                                     'padding': '5px 10px' 
                                 },
                                 
-                                # NEU: Ermöglicht das Rendern von Markdown in der Zelle
-                                style_as_list_view=True,
-                                
-                                # Bedingung, um Leerzeichen im Markdown-Rendern zu erzwingen
+                                # NEU: Bedingte Formatierung zur Farbgebung des gesamten Zelleintrags
                                 style_data_conditional=[
-                                    {'if': {'row_index': 'odd'}, 'backgroundColor': 'rgb(248, 248, 248)'}
-                                ],
+                                    {'if': {'row_index': 'odd'}, 'backgroundColor': 'rgb(248, 248, 248)'},
+                                ] + manufacturer_style_conditions,
                             )
                         ]
                     )
@@ -303,9 +312,7 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
         z='Volumen_Z',
         color='Anzeige_Hersteller',
         color_discrete_map=MANUFACTURER_COLORS,
-        # NEU: Titel entfernt
         title=None, 
-        # NEU: Legenden-Titel geändert
         labels={
             'Support_X': 'Support (Steifigkeit)', 
             'Performance_Y': 'Performance (Aggressivität)', 
@@ -316,8 +323,8 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
     fig.update_layout(scene=dict(xaxis=dict(range=[0.5, 10.5]), yaxis=dict(range=[0.5, 10.5]), zaxis=dict(range=[0.5, 10.5])))
 
     # Aktualisierung der DataTable-Daten
-    # Stelle sicher, dass der Vollständiges_Modell String hier der formattierte Markdown-String ist
-    table_data = df_filtered[['Vollständiges_Modell', 'Schuhmodell']].to_dict('records')
+    # Hinzufügen der Spalte 'Anzeige_Hersteller' für die bedingte Formatierung (wird in app.layout versteckt)
+    table_data = df_filtered[['Vollständiges_Modell', 'Schuhmodell', 'Anzeige_Hersteller']].to_dict('records')
     
     # Aktualisierung der Tooltip-Daten (ohne Achsen-Namen)
     tooltip_data = create_tooltip_data(df_filtered)
@@ -367,15 +374,12 @@ def update_image_preview(selected_rows, rows):
         else:
             image_src = PLACEHOLDER_IMAGE_URL
         
-        # 2. Schuhname (Verwendet Vollständiges_Modell, welches formatierten Markdown enthält)
-        # Wenn der H3-Titel den formatierten Markdown-String erhält, wird er als HTML gerendert
-        # Wir müssen hier den unformatierten String für den H3 verwenden, oder ihn parsen,
-        # Da H3 keinen Markdown unterstützt. Wir verwenden den unformatierten String des Modells:
+        # 2. Schuhname (Plain Text)
         full_name = f"{shoe_data['Anzeige_Hersteller']} {shoe_data['Schuhmodell']}"
         
         # 3. Tooltip-Inhalt (ohne Achsen-Namen, mit Zeilenumbrüchen)
         tooltip_content = dcc.Markdown(
-            f"**Eigenschaften:**\n\n" # Doppeltes \n für Zeilenumbruch im Markdown
+            f"**Eigenschaften:**\n\n"
             f"Hersteller: **{shoe_data['Hersteller']}**\n\n"
             f"Support: **{shoe_data['Support_X']:.1f}**\n\n"
             f"Performance: **{shoe_data['Performance_Y']:.1f}**\n\n"
