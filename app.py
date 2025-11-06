@@ -41,10 +41,14 @@ def load_manufacturer_colors(filepath):
     Lädt die Hersteller-Farben und gibt ein Dictionary zurück.
     Fügt automatisch den Fallback-Hersteller 'Other' hinzu.
     """
-    gruppencodes = {'Other': 'gray'} 
+    # Angepasste Farben für bessere Sichtbarkeit auf weißem Hintergrund
+    gruppencodes = {'Other': 'gray', 'La Sportiva': '#F1C31E', 'Scarpa': '#0097D9'} 
     try:
         df_colors = pd.read_csv(filepath)
-        gruppencodes.update(df_colors.set_index('Hersteller')['Farbcode'].to_dict())
+        # Überschreibt Fallbacks nur, wenn der Hersteller in der Datei existiert
+        for index, row in df_colors.iterrows():
+            gruppencodes[row['Hersteller']] = row['Farbcode']
+            
         return gruppencodes
     except FileNotFoundError:
         print(f"FEHLER: Hersteller-Datei {filepath} nicht gefunden. Verwende Fallback-Farben.")
@@ -72,6 +76,7 @@ def load_climbing_shoe_data(filepath, manufacturer_colors):
         df['Hersteller'] = df['Hersteller'].fillna('Not provided').astype(str)
         
         def get_display_manufacturer(m):
+            # Nutzt den Hersteller, wenn Farbe bekannt, ansonsten 'Other'
             return m if m in manufacturer_colors else 'Other'
 
         df['Anzeige_Hersteller'] = df['Hersteller'].apply(get_display_manufacturer)
@@ -139,11 +144,15 @@ app.layout = dbc.Container([
     
     # --- BLOCK 1: 3D Plot (OBEN) ---
     dbc.Row([
+        # FIX: Padding von p-4 auf p-0 reduziert, um unnötige Margen auf Mobilgeräten zu beseitigen.
         dbc.Col(
-            # Abstand zum Plot ist 0, da der H1 mb-0 hat und der Plot mt-4
-            dcc.Graph(id='3d-scatter-plot', style={'height': '70vh'}, className="mt-4"), 
+            dcc.Graph(
+                id='3d-scatter-plot', 
+                style={'height': '70vh'}, 
+                className="mt-4"
+            ), 
             width=12,
-            className="p-4"
+            className="p-0" # Angepasst, um volle Breite zu nutzen
         )
     ]), 
     
@@ -321,7 +330,21 @@ def update_plot_and_table(support_range, performance_range, volume_range, select
             'Anzeige_Hersteller': 'Marke'
         }
     )
-    fig.update_layout(scene=dict(xaxis=dict(range=[0.5, 10.5]), yaxis=dict(range=[0.5, 10.5]), zaxis=dict(range=[0.5, 10.5])))
+    # FIX: Setze legend.bgcolor auf transparent
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(range=[0.5, 10.5]), 
+            yaxis=dict(range=[0.5, 10.5]), 
+            zaxis=dict(range=[0.5, 10.5])
+        ),
+        # FIX: Legenden-Hintergrund transparent
+        legend=dict(
+            bgcolor='rgba(0,0,0,0)',
+            bordercolor='rgba(0,0,0,0)'
+        ),
+        # Fügt eine kleine Marge hinzu, falls der p-0 Container zu eng ist
+        margin=dict(l=5, r=5, t=5, b=5)
+    )
 
     # Aktualisierung der DataTable-Daten, nun nur mit der formatierten, kombinierten Spalte
     table_data = df_filtered[['Formatierter_Modellname']].to_dict('records')
@@ -371,8 +394,10 @@ def update_image_preview(selected_rows, rows):
         
         # 1. Bild URL
         image_filename = shoe_data['Bildpfad']
+        # Die URL muss den Konfigurations-Basispfad nutzen
         if image_filename and pd.notna(image_filename):
             full_image_url = os.path.join(CONFIG['IMAGE_ASSET_URL_BASE'], image_filename)
+            # Normalisiere den Pfad für URLs
             image_src = full_image_url.replace('\\', '/').replace('//', '/')
         else:
             image_src = PLACEHOLDER_IMAGE_URL
@@ -399,4 +424,6 @@ server = app.server
 
 @server.route(f"/{CONFIG['DATA_DIR']}<path:path>")
 def serve_static(path):
+    # Dient statische Dateien aus dem konfigurierten Datenverzeichnis (z.B. data/)
     return send_from_directory(CONFIG['DATA_DIR'], path)
+
