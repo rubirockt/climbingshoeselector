@@ -1,583 +1,434 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kletterschuh-Datenbank 3D</title>
-    <!-- Lade Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Lade Three.js für 3D-Visualisierung -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7fafc;
-        }
-        .data-point {
-            cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
-        }
-        .data-point:hover {
-            transform: scale(1.05);
-            background-color: #f0f4f8;
-        }
-        #visualization-container {
-            width: 100%;
-            height: 50vh; /* Responsive Höhe für 3D-Container */
-            min-height: 400px;
-            background-color: #e2e8f0;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
-            cursor: grab;
-        }
-        /* Custom scrollbar for table on mobile */
-        .scroll-x {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-    </style>
-</head>
-<body class="p-4 md:p-8">
+import dash
+import pandas as pd
+import plotly.express as px
+from dash import dcc, html, dash_table
+import dash_bootstrap_components as dbc
+import os
+from flask import send_from_directory
 
-    <div class="max-w-7xl mx-auto">
-        <h1 class="text-4xl font-extrabold text-gray-900 mb-6 border-b-4 border-indigo-600 pb-2">
-            Kletterschuh-Datenbank & 3D-Visualisierung
-        </h1>
+# --- 1. Konfigurations- und Datenladeroutinen ---
 
-        <!-- Lade- und Statusmeldungen -->
-        <div id="status-message" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 hidden rounded-lg" role="alert">
-            <p class="font-bold">Lade Daten...</p>
-            <p>Bitte warten Sie, während die Datenbank geladen wird.</p>
-        </div>
-        <div id="error-message" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 hidden rounded-lg" role="alert">
-            <p class="font-bold">Fehler</p>
-            <p id="error-text"></p>
-        </div>
+def load_config(filepath='config.csv'):
+    """Lädt die Anwendungskonfiguration aus config.csv und erstellt vollständige Dateipfade."""
+    try:
+        df_config = pd.read_csv(filepath, index_col='Key')
+        config = df_config['Value'].to_dict()
         
-        <!-- 3D-Visualisierung -->
-        <div id="visualization-container" class="mb-8"></div>
-
-        <!-- Detailanzeige -->
-        <div id="detail-card" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-8 hidden">
-            <h2 class="text-2xl font-bold text-indigo-600 mb-4" id="detail-title">Schuhdetails</h2>
-            <div id="detail-content" class="text-gray-700 space-y-2">
-                <!-- Details werden hier eingefügt -->
-            </div>
-        </div>
-
-        <!-- Filter und Steuerelemente -->
-        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-8">
-            <h2 class="text-xl font-semibold mb-4 text-gray-800">Filter und Einstellungen</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Filter nach Hersteller -->
-                <div>
-                    <label for="filter-hersteller" class="block text-sm font-medium text-gray-700 mb-1">Hersteller filtern:</label>
-                    <select id="filter-hersteller" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
-                        <option value="">Alle Hersteller</option>
-                    </select>
-                </div>
-
-                <!-- Anzeige-Modus -->
-                <div>
-                    <label for="display-mode" class="block text-sm font-medium text-gray-700 mb-1">Visualisierungsmodus:</label>
-                    <select id="display-mode" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
-                        <option value="points">Punkte (Standard)</option>
-                        <option value="overlap">Überlappungsanalyse</option>
-                    </select>
-                </div>
-                
-                <!-- Sichtbarkeit der Achsenbeschriftung -->
-                <div class="flex items-end">
-                    <button id="toggle-labels" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
-                        Achsenbeschriftung umschalten (Ein)
-                    </button>
-                </div>
-            </div>
-            <p class="mt-4 text-sm text-gray-500">
-                **Achsenlegende:** X = Support (Stützleistung, Steifigkeit), Y = Performance (Präzision, Aggressivität), Z = Volumen (Schuhform/Passform).
-            </p>
-        </div>
-
-        <!-- Schuh-Tabelle -->
-        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-            <h2 class="text-xl font-semibold mb-4 text-gray-800" id="table-title">Gefilterte Schuhmodelle (<span id="shoe-count">0</span>)</h2>
-            <div class="scroll-x">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hersteller</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schuhmodell</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Support (X)</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance (Y)</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volumen (Z)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="shoe-table-body" class="bg-white divide-y divide-gray-200">
-                        <!-- Schuhreihen werden hier eingefügt -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, orderBy, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Globale Variablen für Firebase und Three.js
-        let db;
-        let auth;
-        let userId;
-        let allShoes = [];
-        let scene, camera, renderer, controls;
-        let shoePoints = [];
-        let shoeLabels = [];
-        let isLabelsVisible = true;
+        # Erstellt vollständige, relative Pfade basierend auf der Konfiguration
+        config['SHOE_DATA_PATH'] = os.path.join(config['DATA_DIR'], config['SHOE_DATA_FILE'])
+        config['MANUFACTURER_COLORS_PATH'] = os.path.join(config['DATA_DIR'], config['MANUFACTURER_FILE'])
         
-        // --- Firestore & Auth Setup ---
-
-        // Firebase-Konfiguration und App-ID aus der Canvas-Umgebung
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        if (firebaseConfig) {
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            // setLogLevel('debug'); // Deaktiviert, um die Konsole sauber zu halten
-            
-            // 1. Authentifizierung
-            onAuthStateChanged(auth, async (user) => {
-                const statusMessage = document.getElementById('status-message');
-                if (user) {
-                    userId = user.uid;
-                    statusMessage.innerHTML = '<p class="font-bold">Datenbank verbunden.</p>';
-                    // 2. Daten laden (nur wenn authentifiziert)
-                    setupFirestoreListener();
-                } else {
-                    // Falls noch nicht angemeldet, mit Custom Token oder anonym anmelden
-                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Firebase Auth Fehler:", error);
-                        document.getElementById('error-text').textContent = "Authentifizierung fehlgeschlagen: " + error.message;
-                        document.getElementById('error-message').classList.remove('hidden');
-                        statusMessage.classList.add('hidden');
-                    }
-                }
-            });
-        }
-
-        // --- Firestore Listener ---
-
-        function setupFirestoreListener() {
-            if (!db) return;
-
-            const shoesCollectionRef = collection(db, `artifacts/${appId}/public/data/climbing_shoes`);
-            // Hinweis: orderBy() in Firestore kann einen Index erfordern. Wir sortieren clientseitig.
-            const q = query(shoesCollectionRef);
-
-            document.getElementById('status-message').classList.remove('hidden');
-            document.getElementById('status-message').innerHTML = '<p class="font-bold">Lade Schuhdaten...</p>';
-
-            onSnapshot(q, (snapshot) => {
-                document.getElementById('status-message').classList.add('hidden');
-                
-                const shoes = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    // Konvertiere die Felder in Zahlen (obwohl sie aus Firestore kommen, ist es sicherer)
-                    Support_X: parseFloat(doc.data().Support_X),
-                    Performance_Y: parseFloat(doc.data().Performance_Y),
-                    Volumen_Z: parseFloat(doc.data().Volumen_Z),
-                }));
-                allShoes = shoes;
-                
-                // Aktualisiere Hersteller-Filter-Optionen
-                updateManufacturerFilter(allShoes);
-                
-                // Filtere und Visualisiere die Daten
-                filterAndRenderShoes();
-            }, (error) => {
-                console.error("Firestore Fehler:", error);
-                document.getElementById('error-text').textContent = "Fehler beim Laden der Daten: " + error.message;
-                document.getElementById('error-message').classList.remove('hidden');
-            });
-        }
+        # Speichert den Basis-Pfad für Bilder (wird im Callback verwendet)
+        config['IMAGE_ASSET_URL_BASE'] = os.path.join("/", config['DATA_DIR'], config['IMAGE_SUBDIR'])
         
-        // --- 3D Visualisierung (Three.js) ---
-
-        function initThree() {
-            const container = document.getElementById('visualization-container');
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-
-            // Szene
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xf0f4f8); // Helles Blau-Grau
-
-            // Kamera
-            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-            camera.position.set(15, 15, 15);
-            camera.lookAt(0, 0, 0);
-
-            // Renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(width, height);
-            container.appendChild(renderer.domElement);
-
-            // Achsen- und Gitter-Helfer (für 10x10x10 Würfel)
-            const gridHelper = new THREE.GridHelper(10, 10, 0x000000, 0x000000);
-            gridHelper.material.opacity = 0.2;
-            gridHelper.material.transparent = true;
-            gridHelper.position.y = 0; // X-Z-Ebene
-            scene.add(gridHelper);
-
-            const gridHelper2 = new THREE.GridHelper(10, 10, 0x000000, 0x000000);
-            gridHelper2.material.opacity = 0.2;
-            gridHelper2.material.transparent = true;
-            gridHelper2.rotation.z = Math.PI / 2;
-            gridHelper2.position.x = 0; // Y-Z-Ebene
-            scene.add(gridHelper2);
-
-            const gridHelper3 = new THREE.GridHelper(10, 10, 0x000000, 0x000000);
-            gridHelper3.material.opacity = 0.2;
-            gridHelper3.material.transparent = true;
-            gridHelper3.rotation.x = Math.PI / 2;
-            gridHelper3.position.z = 0; // X-Y-Ebene
-            scene.add(gridHelper3);
-
-            // Achsenbeschriftung (X, Y, Z)
-            createAxisLabels();
-
-            // Beleuchtung
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            scene.add(new THREE.DirectionalLight(0xffffff, 0.6));
-
-            // Steuerung (OrbitControls, da sie einfacher sind)
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-
-            // Event Listener für Größenänderungen
-            window.addEventListener('resize', onWindowResize, false);
-            
-            // Start der Render-Schleife
-            animate();
+        return config
+    except FileNotFoundError:
+        print(f"FATAL ERROR: Konfigurationsdatei '{filepath}' nicht gefunden.")
+        # Fallback auf Hardcoded-Pfade, um den Betrieb zu ermöglichen
+        return {
+            'DATA_DIR': 'data/',
+            'SHOE_DATA_PATH': 'data/climbingshoedata.csv',
+            'MANUFACTURER_COLORS_PATH': 'data/manufacturer.csv',
+            'IMAGE_SUBDIR': 'images/',
+            'IMAGE_ASSET_URL_BASE': '/data/images/'
         }
+    except Exception as e:
+        print(f"FATAL ERROR beim Laden der Konfiguration: {e}. Prüfe die Struktur von {filepath}.")
+        return None 
+
+def load_manufacturer_colors(filepath):
+    """
+    Lädt die Hersteller-Farben und gibt ein Dictionary zurück.
+    Fügt automatisch den Fallback-Hersteller 'Other' hinzu.
+    """
+    # Angepasste Farben für bessere Sichtbarkeit auf weißem Hintergrund
+    gruppencodes = {'Other': 'gray', 'La Sportiva': '#F1C31E', 'Scarpa': '#0097D9'} 
+    try:
+        df_colors = pd.read_csv(filepath)
+        # Überschreibt Fallbacks nur, wenn der Hersteller in der Datei existiert
+        for index, row in df_colors.iterrows():
+            gruppencodes[row['Hersteller']] = row['Farbcode']
+            
+        return gruppencodes
+    except FileNotFoundError:
+        print(f"FEHLER: Hersteller-Datei {filepath} nicht gefunden. Verwende Fallback-Farben.")
+        return gruppencodes
+    except Exception as e:
+        print(f"FEHLER beim Laden der Herstellerfarben: {e}. Prüfe die Struktur von {filepath}.")
+        return gruppencodes
+
+def load_climbing_shoe_data(filepath, manufacturer_colors):
+    """
+    Lädt und bereinigt die Kletterschuhdaten, wendet Robustheitsregeln an und fügt Farben hinzu.
+    """
+    try:
+        df = pd.read_csv(filepath)
         
-        function onWindowResize() {
-            const container = document.getElementById('visualization-container');
-            if (!container) return;
-
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-            renderer.setSize(width, height);
-            
-            // Achsenbeschriftung aktualisieren, da der Canvas neu gezeichnet wird
-            if(isLabelsVisible) {
-                updateShoeLabelPositions();
-            }
-        }
+        if 'id' not in df.columns:
+            df['id'] = range(1, len(df) + 1)
+        df['id'] = pd.to_numeric(df['id'], errors='coerce').fillna(0).astype(int)
         
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-            if(isLabelsVisible) {
-                updateShoeLabelPositions();
-            }
-        }
+        numeric_cols = ['Support_X', 'Performance_Y', 'Volumen_Z']
+        for col in numeric_cols:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(5.5)
+            df[col] = df[col].clip(lower=1.0, upper=10.0)
 
-        // Hilfsfunktion zur Erstellung der Achsenbeschriftungen
-        function createAxisLabels() {
-            // Entferne alte Beschriftungen
-            shoeLabels.forEach(label => label.element.remove());
-            shoeLabels = [];
-
-            const axisData = [
-                { text: 'Support (X)', pos: [12, 0, 0], color: '#ff0000' },
-                { text: 'Performance (Y)', pos: [0, 12, 0], color: '#00ff00' },
-                { text: 'Volumen (Z)', pos: [0, 0, 12], color: '#0000ff' }
-            ];
-
-            axisData.forEach(data => {
-                const element = document.createElement('div');
-                element.className = 'absolute text-xs font-bold p-1 rounded-sm shadow-md';
-                element.style.backgroundColor = 'white';
-                element.style.color = data.color;
-                element.textContent = data.text;
-                document.body.appendChild(element);
-
-                shoeLabels.push({
-                    element: element,
-                    position: new THREE.Vector3(data.pos[0], data.pos[1], data.pos[2]),
-                    isDataPoint: false
-                });
-            });
-            // Füge die Achsenbeschriftungen hinzu
-            updateShoeLabelPositions();
-        }
-
-        function clearVisualisation() {
-            // Entferne alle alten Punkte und Beschriftungen (außer Achsen)
-            shoePoints.forEach(point => scene.remove(point));
-            shoePoints = [];
-            shoeLabels = shoeLabels.filter(label => !label.isDataPoint); // Nur Achsenbeschriftungen behalten
-            document.querySelectorAll('.shoe-label').forEach(el => el.remove());
-        }
-
-        // --- Datenverarbeitung und Rendering ---
-
-        function updateManufacturerFilter(shoes) {
-            const select = document.getElementById('filter-hersteller');
-            const manufacturers = [...new Set(shoes.map(shoe => shoe.Hersteller))].sort();
-            
-            // Speichere die aktuell ausgewählte Option
-            const currentSelection = select.value;
-            
-            // Leere die Liste und füge die Standardoption hinzu
-            select.innerHTML = '<option value="">Alle Hersteller</option>';
-            
-            // Füge neue Optionen hinzu
-            manufacturers.forEach(manufacturer => {
-                const option = document.createElement('option');
-                option.value = manufacturer;
-                option.textContent = manufacturer;
-                select.appendChild(option);
-            });
-            
-            // Setze die Auswahl zurück, falls die vorherige Option noch existiert
-            if (manufacturers.includes(currentSelection)) {
-                select.value = currentSelection;
-            }
-        }
-
-        function filterAndRenderShoes() {
-            const selectedManufacturer = document.getElementById('filter-hersteller').value;
-            let filteredShoes = allShoes;
-
-            if (selectedManufacturer) {
-                filteredShoes = allShoes.filter(shoe => shoe.Hersteller === selectedManufacturer);
-            }
-            
-            // MANDATORISCHE ANFORDERUNG: Sortiere die gefilterte Liste alphabetisch nach Hersteller + Schuhmodell
-            filteredShoes.sort((a, b) => {
-                const nameA = a.Hersteller + " " + a.Schuhmodell;
-                const nameB = b.Hersteller + " " + b.Schuhmodell;
-                // localeCompare für korrekte alphabetische Sortierung
-                return nameA.localeCompare(nameB, 'de', { sensitivity: 'base' });
-            });
-            
-            // Visualisierung aktualisieren
-            render3DPoints(filteredShoes);
-            
-            // Tabelle aktualisieren
-            renderTable(filteredShoes);
-        }
-
-        function render3DPoints(shoes) {
-            clearVisualisation();
-            
-            const mode = document.getElementById('display-mode').value;
-            
-            shoes.forEach((shoe, index) => {
-                const x = shoe.Support_X / 10 * 10;
-                const y = shoe.Performance_Y / 10 * 10;
-                const z = shoe.Volumen_Z / 10 * 10;
-                
-                let size = 0.5;
-                let color = new THREE.Color(0x000000); // Schwarz
-                
-                if (shoe.Hersteller === 'La Sportiva') {
-                    color = new THREE.Color(0xff0000); // Rot
-                } else if (shoe.Hersteller === 'Scarpa') {
-                    color = new THREE.Color(0x0000ff); // Blau
-                }
-
-                // Im 'overlap'-Modus Punkte gleicher Position hervorheben
-                if (mode === 'overlap') {
-                    const overlapCount = shoes.filter(
-                        s => s.Support_X === shoe.Support_X && 
-                             s.Performance_Y === shoe.Performance_Y && 
-                             s.Volumen_Z === shoe.Volumen_Z
-                    ).length;
-                    
-                    if (overlapCount > 1) {
-                        size = 0.8; // Größer für überlappende Punkte
-                        color = new THREE.Color(0xffaa00); // Orange für Überlappung
-                    }
-                }
-
-                const geometry = new THREE.SphereGeometry(size * 0.1, 16, 16); // Kleinere Punkte
-                const material = new THREE.MeshPhongMaterial({ color: color });
-                const point = new THREE.Mesh(geometry, material);
-                
-                // Normalisiere die Achsen auf einen Bereich von 0 bis 10
-                // X (Support): 0-10 -> 0-10
-                // Y (Performance): 0-10 -> 0-10
-                // Z (Volumen): 0-10 -> 0-10
-                point.position.set(x, y, z); 
-                point.userData = { shoe: shoe };
-
-                // Event Listener für Klick auf den Punkt
-                point.addEventListener('click', () => showDetails(shoe));
-
-                scene.add(point);
-                shoePoints.push(point);
-                
-                // Erstelle CSS-Label für jeden Schuh
-                const labelElement = document.createElement('div');
-                labelElement.className = 'shoe-label absolute text-xs bg-gray-900 text-white px-1 py-0.5 rounded opacity-75 whitespace-nowrap hidden';
-                labelElement.textContent = `${shoe.Hersteller} ${shoe.Schuhmodell}`;
-                document.body.appendChild(labelElement);
-
-                shoeLabels.push({
-                    element: labelElement,
-                    position: point.position,
-                    isDataPoint: true
-                });
-            });
-            
-            // Aktualisiere die Beschriftungen beim Rendern
-            updateShoeLabelVisibility(isLabelsVisible);
-        }
-
-        // Funktion zur Aktualisierung der Positionen der HTML-Labels basierend auf 3D-Position
-        function updateShoeLabelPositions() {
-            const container = document.getElementById('visualization-container');
-            const rect = container.getBoundingClientRect();
-            
-            shoeLabels.forEach(label => {
-                // Beschriftungen nur aktualisieren, wenn sie sichtbar sind
-                if (label.element.classList.contains('hidden') && label.isDataPoint) return;
-                
-                // 3D-Position in 2D-Bildschirmkoordinaten umwandeln
-                const vector = label.position.clone();
-                vector.project(camera);
-
-                // Berechne Bildschirmkoordinaten
-                const x = (vector.x * 0.5 + 0.5) * rect.width + rect.left;
-                const y = (-vector.y * 0.5 + 0.5) * rect.height + rect.top;
-
-                // Setze die Position des HTML-Elements (Zentrierung)
-                label.element.style.left = `${x}px`;
-                label.element.style.top = `${y}px`;
-                label.element.style.transform = `translate(-50%, -50%)`;
-                
-                // Optional: Verstecke Punkte, die außerhalb des Blickfeldes liegen
-                if (vector.z > 1) {
-                     label.element.classList.add('hidden');
-                } else if (!label.element.classList.contains('hidden') && label.isDataPoint) {
-                    label.element.classList.remove('hidden');
-                }
-            });
-        }
+        df['Hersteller'] = df['Hersteller'].fillna('Not provided').astype(str)
         
-        function updateShoeLabelVisibility(visible) {
-            isLabelsVisible = visible;
-            const button = document.getElementById('toggle-labels');
-            
-            shoeLabels.forEach(label => {
-                if (label.isDataPoint) {
-                    label.element.classList.toggle('hidden', !visible);
-                }
-            });
-            
-            if (visible) {
-                button.textContent = "Achsenbeschriftung umschalten (Ein)";
-                updateShoeLabelPositions();
-            } else {
-                button.textContent = "Achsenbeschriftung umschalten (Aus)";
-            }
-        }
-        
-        function renderTable(shoes) {
-            const tableBody = document.getElementById('shoe-table-body');
-            const shoeCount = document.getElementById('shoe-count');
-            tableBody.innerHTML = '';
-            
-            shoeCount.textContent = shoes.length;
+        def get_display_manufacturer(m):
+            # Nutzt den Hersteller, wenn Farbe bekannt, ansonsten 'Other'
+            return m if m in manufacturer_colors else 'Other'
 
-            shoes.forEach(shoe => {
-                const row = tableBody.insertRow();
-                row.className = 'data-point hover:bg-indigo-50 hover:shadow-inner transition duration-150';
-                row.onclick = () => showDetails(shoe);
+        df['Anzeige_Hersteller'] = df['Hersteller'].apply(get_display_manufacturer)
+        df['Farbcode'] = df['Anzeige_Hersteller'].map(manufacturer_colors)
+        
+        # Wird für den Hover-Namen des 3D-Plots verwendet (immer noch Hersteller + Modell)
+        df['Vollständiges_Modell'] = df['Anzeige_Hersteller'] + ' ' + df['Schuhmodell']
+
+        # Spalte für die Tabellendarstellung: Hersteller + **Modell** (fett)
+        df['Formatierter_Modellname'] = df['Anzeige_Hersteller'] + ' **' + df['Schuhmodell'] + '**'
+        
+        return df
+
+    except FileNotFoundError:
+        print(f"FATAL ERROR: Schuhdaten-Datei {filepath} nicht gefunden.")
+        return pd.DataFrame() 
+    except Exception as e:
+        print(f"FATAL ERROR beim Verarbeiten der Schuhdaten: {e}")
+        return pd.DataFrame() 
+
+# --- Globale Dateninitialisierung ---
+CONFIG = load_config()
+if CONFIG is None:
+    raise Exception("Anwendung konnte aufgrund eines Konfigurationsfehlers nicht gestartet werden.")
+
+MANUFACTURER_COLORS = load_manufacturer_colors(CONFIG['MANUFACTURER_COLORS_PATH'])
+DF_SHOES = load_climbing_shoe_data(CONFIG['SHOE_DATA_PATH'], MANUFACTURER_COLORS)
+
+if DF_SHOES.empty:
+    raise Exception("Anwendung konnte aufgrund fehlender oder fehlerhafter Schuhdaten nicht gestartet werden.")
+
+# --- Dash App Setup ---
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+PLACEHOLDER_IMAGE_URL = '/assets/placeholder.svg'
+
+# --- Funktionen für Tooltip-Erstellung (für die DataTable) ---
+def create_tooltip_data(df_filtered):
+    """
+    Erstellt die Tooltip-Datenstruktur, zugeordnet zur sichtbaren Spalte 
+    'Formatierter_Modellname'.
+    """
+    tooltip_data = []
+    
+    for index, row in df_filtered.iterrows():
+        tooltip_item = {}
+        # Der Tooltip wird der Spalte 'Formatierter_Modellname' zugewiesen
+        tooltip_item['Formatierter_Modellname'] = {
+            'value': (
+                f"Hersteller: {row['Anzeige_Hersteller']}\n\n"
+                f"Support: {row['Support_X']:.1f}\n\n"
+                f"Performance: {row['Performance_Y']:.1f}\n\n"
+                f"Volumen: {row['Volumen_Z']:.1f}"
+            ),
+            'type': 'markdown'
+        }
+        tooltip_data.append(tooltip_item)
+    return tooltip_data
+
+# --- App Layout ---
+
+app.layout = dbc.Container([
+    # Geänderte Überschrift, reduzierte Schriftgröße und Abstand entfernt
+    html.H1("Kletterschuh-Finder", className="mt-4 mb-0 text-center", style={'fontSize': '2.1rem'}),
+    
+    # --- BLOCK 1: 3D Plot (OBEN) ---
+    dbc.Row([
+        # FIX: Padding von p-4 auf p-0 reduziert, um unnötige Margen auf Mobilgeräten zu beseitigen.
+        dbc.Col(
+            dcc.Graph(
+                id='3d-scatter-plot', 
+                style={'height': '70vh'}, 
+                className="mt-4"
+            ), 
+            width=12,
+            className="p-0" # Angepasst, um volle Breite zu nutzen
+        )
+    ]), 
+    
+    # --- BLOCK 2: Filter, Liste und Bildvorschau (UNTEN) ---
+    dbc.Row([ 
+        # Spalte 1: Filter-Regler (Linke Seite) (Breite: 5/12)
+        dbc.Col([
+            html.Div(id='filter-container', children=[
+                html.H4("Filterkriterien", className="mb-3", style={'fontSize': '1.05rem'}),
                 
-                const manufacturerCell = row.insertCell();
-                manufacturerCell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900';
-                manufacturerCell.textContent = shoe.Hersteller;
+                # Zentrierte Überschrift und vereinfachter Text
+                html.H5("Support", className="mt-2 text-center", style={'fontSize': '0.9rem'}),
+                dcc.RangeSlider(
+                    id='support-slider',
+                    min=1, max=10, step=0.1, value=[1, 10],
+                    marks={i: str(i) for i in range(1, 11)},
+                    tooltip={"placement": "bottom", "always_visible": True}
+                ),
+                
+                # Zentrierte Überschrift und vereinfachter Text
+                html.H5("Performance", className="mt-4 text-center", style={'fontSize': '0.9rem'}),
+                dcc.RangeSlider(
+                    id='performance-slider',
+                    min=1, max=10, step=0.1, value=[1, 10],
+                    marks={i: str(i) for i in range(1, 11)},
+                    tooltip={"placement": "bottom", "always_visible": True}
+                ),
+                
+                # Zentrierte Überschrift und vereinfachter Text
+                html.H5("Volumen", className="mt-4 text-center", style={'fontSize': '0.9rem'}),
+                dcc.RangeSlider(
+                    id='volume-slider',
+                    min=1, max=10, step=0.1, value=[1, 10],
+                    marks={i: str(i) for i in range(1, 11)},
+                    tooltip={"placement": "bottom", "always_visible": True}
+                ),
 
-                const modelCell = row.insertCell();
-                modelCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
-                modelCell.textContent = shoe.Schuhmodell;
+                html.Label("Hersteller filtern", className="mt-4"),
+                dcc.Dropdown(
+                    id='manufacturer-checklist',
+                    options=[{'label': m, 'value': m} for m in sorted(DF_SHOES['Anzeige_Hersteller'].unique())],
+                    value=sorted(DF_SHOES['Anzeige_Hersteller'].unique()),
+                    multi=True,
+                    className="mt-2"
+                )
+            ])
+        ], md=5, className="p-4 bg-light rounded-3 shadow-sm", style={'minHeight': '500px'}), 
 
-                const supportCell = row.insertCell();
-                supportCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
-                supportCell.textContent = shoe.Support_X.toFixed(1);
+        # Spalte 2: Dynamische Liste und Bildvorschau (Rechte Seite) (Breite: 7/12)
+        dbc.Col([
+            dbc.Row([
+                # Unterspalte 2.1: DataTable (Breite: 7/12 der rechten Spalte)
+                dbc.Col([
+                    # Abstand zur Tabelle auf 3px reduziert
+                    html.H4("Geeignete Modelle", style={'fontSize': '1.05rem', 'marginBottom': '3px'}),
+                    html.Div(
+                        id='filtered-list-container',
+                        style={'height': '100%', 'overflowY': 'auto'}, 
+                        children=[
+                            dash_table.DataTable(
+                                id='shoes-table',
+                                columns=[
+                                    # Nur die kombinierte Spalte mit Hersteller und Modell wird angezeigt.
+                                    {"name": "Modell", "id": "Formatierter_Modellname", "presentation": "markdown"},
+                                ],
+                                # Daten werden im Callback aktualisiert
+                                # Nur die Spalte 'Formatierter_Modellname' wird für die Tabelle vorbereitet
+                                data=DF_SHOES[['Formatierter_Modellname']].to_dict('records'),
+                                
+                                style_header={'display': 'none'}, # Überschriften weiterhin ausblenden
+                                
+                                # marginTop/paddingTop auf 0px gesetzt, um Abstand zu eliminieren
+                                style_table={'overflowY': 'scroll', 'maxHeight': '380px', 'width': '100%', 'marginTop': '0px', 'paddingTop': '0px'}, 
+                                
+                                row_selectable='single', 
+                                selected_rows=[0], 
+                                # Tooltip-Daten verwenden nun 'Formatierter_Modellname'
+                                tooltip_data=create_tooltip_data(DF_SHOES),
+                                tooltip_duration=None,
+                                
+                                style_data={
+                                    'fontSize': '12pt', 
+                                    'padding': '5px 10px',
+                                    # Textfarbe Schwarz für die gesamte Zelle
+                                    'color': '#000000', 
+                                },
+                                
+                                # Bedingte Formatierung nur für Zeilenfarben (keine Herstellerfarben mehr)
+                                style_data_conditional=[
+                                    {'if': {'row_index': 'odd'}, 'backgroundColor': 'rgb(248, 248, 248)'},
+                                ],
+                            )
+                        ]
+                    )
+                ], md=7, className="h-100 d-flex flex-column"), 
 
-                const performanceCell = row.insertCell();
-                performanceCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
-                performanceCell.textContent = shoe.Performance_Y.toFixed(1);
+                # Unterspalte 2.2: Bildvorschau (Breite: 5/12 der rechten Spalte)
+                dbc.Col([
+                    html.H4("Modell-Vorschau", className="mb-2", style={'fontSize': '1.05rem'}),
+                    html.Div(
+                        id='image-display-area',
+                        style={'height': 'calc(100% - 30px)'}, 
+                        children=[
+                            html.Div(
+                                id='image-preview-container',
+                                className="d-flex justify-content-center align-items-center",
+                                style={'height': '70%', 'border': '1px solid #ddd', 'borderRadius': '5px', 'backgroundColor': '#f9f9f9', 'marginBottom': '10px'},
+                                children=[
+                                    html.Img(id='shoe-image', src=PLACEHOLDER_IMAGE_URL, style={'maxHeight': '100%', 'maxWidth': '100%', 'objectFit': 'contain'})
+                                ]
+                            ),
+                            html.Div(
+                                id='shoe-name-info',
+                                className="text-center",
+                                children=[
+                                    html.H3(id='shoe-full-name', children='Scarpa Drago', style={'cursor': 'pointer'}),
+                                    dbc.Tooltip( 
+                                        id='shoe-name-tooltip',
+                                        target='shoe-full-name',
+                                        placement='top'
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ], md=5, className="h-100 d-flex flex-column")
+            ], className="g-4 h-100") 
+        ], md=7, className="p-4", style={'minHeight': '500px'}), 
+    ], className="g-4")
+], fluid=True)
 
-                const volumenCell = row.insertCell();
-                volumenCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
-                volumenCell.textContent = shoe.Volumen_Z.toFixed(1);
-            });
+
+# --- Callbacks ---
+
+# Callback 1: Filtert die Daten und aktualisiert Plot & DataTable
+@app.callback(
+    [
+        dash.Output('3d-scatter-plot', 'figure'),
+        dash.Output('shoes-table', 'data'),
+        dash.Output('shoes-table', 'tooltip_data'),
+        dash.Output('shoes-table', 'selected_rows')
+    ],
+    [
+        dash.Input('support-slider', 'value'),
+        dash.Input('performance-slider', 'value'),
+        dash.Input('volume-slider', 'value'),
+        dash.Input('manufacturer-checklist', 'value')
+    ],
+    dash.State('shoes-table', 'selected_rows')
+)
+def update_plot_and_table(support_range, performance_range, volume_range, selected_manufacturers, current_selected_rows):
+    # Filterung der Daten
+    df_filtered = DF_SHOES[
+        (DF_SHOES['Support_X'] >= support_range[0]) & (DF_SHOES['Support_X'] <= support_range[1]) &
+        (DF_SHOES['Performance_Y'] >= performance_range[0]) & (DF_SHOES['Performance_Y'] <= performance_range[1]) &
+        (DF_SHOES['Volumen_Z'] >= volume_range[0]) & (DF_SHOES['Volumen_Z'] <= volume_range[1]) &
+        (DF_SHOES['Anzeige_Hersteller'].isin(selected_manufacturers if selected_manufacturers is not None else []))
+    ].copy()
+    
+    # --- SORTIERUNG HINZUGEFÜGT ---
+    # Sortiert die gefilterten Daten alphabetisch nach dem kombinierten Namen
+    # Dies stellt sicher, dass die Tabelle immer alphabetisch sortiert ist.
+    df_filtered.sort_values(by='Vollständiges_Modell', inplace=True)
+
+    # Erstellung des 3D-Plots
+    fig = px.scatter_3d(
+        df_filtered, 
+        x='Support_X', 
+        y='Performance_Y', 
+        z='Volumen_Z',
+        color='Anzeige_Hersteller',
+        # hover_name verwendet weiterhin 'Vollständiges_Modell'
+        hover_name='Vollständiges_Modell',
+        color_discrete_map=MANUFACTURER_COLORS,
+        title=None, 
+        labels={
+            'Support_X': 'Support (Steifigkeit)', 
+            'Performance_Y': 'Performance (Aggressivität)', 
+            'Volumen_Z': 'Volumen (Breite/Höhe)',
+            'Anzeige_Hersteller': 'Marke'
         }
-        
-        function showDetails(shoe) {
-            const detailCard = document.getElementById('detail-card');
-            document.getElementById('detail-title').textContent = `${shoe.Hersteller} ${shoe.Schuhmodell}`;
-            document.getElementById('detail-content').innerHTML = `
-                <p><strong>Support (X - Steifigkeit):</strong> ${shoe.Support_X.toFixed(1)} / 10</p>
-                <p><strong>Performance (Y - Aggressivität):</strong> ${shoe.Performance_Y.toFixed(1)} / 10</p>
-                <p><strong>Volumen (Z - Passform):</strong> ${shoe.Volumen_Z.toFixed(1)} / 10</p>
-                <p class="mt-4 text-xs text-gray-500">Klicken Sie auf andere Zeilen in der Tabelle oder Punkte in der Visualisierung, um die Details zu aktualisieren.</p>
-            `;
-            detailCard.classList.remove('hidden');
-            detailCard.scrollIntoView({ behavior: 'smooth' });
-        }
+    )
+    # FIX: Setze legend.bgcolor auf transparent
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(range=[0.5, 10.5], ticktext=['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Max'], tickvals=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 
+            yaxis=dict(range=[0.5, 10.5]), 
+            zaxis=dict(range=[0.5, 10.5], ticktext=['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Max. Volumen'], tickvals=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        ),
+        # FIX: Legenden-Hintergrund transparent
+        legend=dict(
+            bgcolor='rgba(0,0,0,0)',
+            bordercolor='rgba(0,0,0,0)',
+            title=dict(text='Marke')
+        ),
+        # Fügt eine kleine Marge hinzu, falls der p-0 Container zu eng ist
+        margin=dict(l=5, r=5, t=5, b=5)
+    )
 
-        // --- Event Listener Setup ---
-        
-        window.onload = function() {
-            // Initialisiere Three.js
-            initThree();
-            
-            // Setze Event Listener für Filter und Modi
-            document.getElementById('filter-hersteller').addEventListener('change', filterAndRenderShoes);
-            document.getElementById('display-mode').addEventListener('change', filterAndRenderShoes);
-            document.getElementById('toggle-labels').addEventListener('click', () => {
-                updateShoeLabelVisibility(!isLabelsVisible);
-            });
-        };
-        
-        // --- Dummy-Implementierung für OrbitControls (falls Three.js nicht geladen wird) ---
-        // Dies ist notwendig, da die Umgebung Three.js nicht automatisch bereitstellt.
-        // Die volle, selbstständige Funktionalität ist durch die obigen Imports gewährleistet.
-        if (typeof THREE.OrbitControls === 'undefined') {
-            class OrbitControls {
-                constructor() {
-                    console.warn("THREE.OrbitControls nicht gefunden. 3D-Steuerung ist deaktiviert.");
-                    this.enableDamping = false;
-                }
-                update() {}
-            }
-            window.THREE.OrbitControls = OrbitControls;
-        }
+    # Aktualisierung der DataTable-Daten, nun nur mit der formatierten, kombinierten Spalte
+    table_data = df_filtered[['Formatierter_Modellname']].to_dict('records')
+    
+    # Aktualisierung der Tooltip-Daten
+    tooltip_data = create_tooltip_data(df_filtered)
 
-    </script>
-</body>
-</html>
+    # Versuch, die Auswahl beizubehalten, ansonsten Standard auf erste Zeile
+    new_selected_rows = []
+    if current_selected_rows is not None and current_selected_rows and current_selected_rows[0] < len(table_data):
+        new_selected_rows = [current_selected_rows[0]]
+    elif len(table_data) > 0:
+        new_selected_rows = [0]
+        
+    return fig, table_data, tooltip_data, new_selected_rows
+
+
+# Callback 2: Aktualisiert Bildvorschau und Namen/Tooltip beim Klick auf einen Eintrag in der DataTable
+@app.callback(
+    [
+        dash.Output('shoe-image', 'src'),
+        dash.Output('shoe-full-name', 'children'),
+        dash.Output('shoe-name-tooltip', 'children')
+    ],
+    [
+        dash.Input('shoes-table', 'selected_rows'),
+        dash.Input('shoes-table', 'data')
+    ]
+)
+def update_image_preview(selected_rows, rows):
+    default_name = "Kein Schuh ausgewählt"
+    default_tooltip = "Bitte wählen Sie einen Schuh aus der Liste."
+    
+    if selected_rows is None or len(selected_rows) == 0 or len(rows) == 0:
+        return PLACEHOLDER_IMAGE_URL, default_name, default_tooltip
+
+    row_index = selected_rows[0]
+    
+    # Nutze den vollständig formatierten Namen der ausgewählten Zeile zur Suche
+    selected_formatted_name = rows[row_index]['Formatierter_Modellname']
+    
+    # Suche die vollständige Reihe im globalen DataFrame DF_SHOES anhand des formatierten Namens
+    shoe_row = DF_SHOES[DF_SHOES['Formatierter_Modellname'] == selected_formatted_name]
+
+    if not shoe_row.empty:
+        shoe_data = shoe_row.iloc[0]
+        
+        # 1. Bild URL
+        image_filename = shoe_data['Bildpfad']
+        # Die URL muss den Konfigurations-Basispfad nutzen
+        if image_filename and pd.notna(image_filename):
+            full_image_url = os.path.join(CONFIG['IMAGE_ASSET_URL_BASE'], image_filename)
+            # Normalisiere den Pfad für URLs
+            image_src = full_image_url.replace('\\', '/').replace('//', '/')
+        else:
+            image_src = PLACEHOLDER_IMAGE_URL
+        
+        # 2. Schuhname (Plain Text)
+        full_name = f"{shoe_data['Anzeige_Hersteller']} {shoe_data['Schuhmodell']}"
+        
+        # 3. Tooltip-Inhalt (ohne Achsen-Namen, mit Zeilenumbrüchen)
+        tooltip_content = dcc.Markdown(
+            f"**Eigenschaften:**\n\n"
+            f"Hersteller: **{shoe_data['Hersteller']}**\n\n"
+            f"Support: **{shoe_data['Support_X']:.1f}**\n\n"
+            f"Performance: **{shoe_data['Performance_Y']:.1f}**\n\n"
+            f"Volumen: **{shoe_data['Volumen_Z']:.1f}**"
+        )
+
+        return image_src, full_name, tooltip_content
+    
+    return PLACEHOLDER_IMAGE_URL, default_name, default_tooltip
+
+
+# --- Gunicorn/WSGI Server Fix und NEUE ROUTE ---
+server = app.server
+
+@server.route(f"/{CONFIG['DATA_DIR']}<path:path>")
+def serve_static(path):
+    # Dient statische Dateien aus dem konfigurierten Datenverzeichnis (z.B. data/)
+    return send_from_directory(CONFIG['DATA_DIR'], path)
