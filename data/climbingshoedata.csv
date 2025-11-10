@@ -1,26 +1,26 @@
 id,Schuhmodell,Hersteller,Support_X,Performance_Y,Volumen_Z,Toe,Bildpfad
-1,Miura,La Sportiva,7.0,8.0,1.0,N/A,1.png
-2,Futura,La Sportiva,3.5,8.8,4.8,N/A,2.png
-3,Katana,La Sportiva,6.0,5.0,6.2,N/A,3.png
-4,Katana Laces,La Sportiva,7.8,8.0,5.5,N/A,4.png
+1,Miura,La Sportiva,7.0,8.2,1.0,N/A,1.png
+2,Futura,La Sportiva,3.5,7.1,4.8,N/A,2.png
+3,Katana,La Sportiva,6.0,6.5,6.2,N/A,3.png
+4,Katana Laces,La Sportiva,7.8,9.0,5.5,N/A,4.png
 5,Kataki,La Sportiva,7.6,7.8,1.0,N/A,5.png
-6,Python,La Sportiva,3.8,7.5,6.4,N/A,6.png
-7,Cobra,La Sportiva,3.8,5.5,5.5,N/A,7.png
-8,Solution Comp,La Sportiva,4.6,9.8,4.7,N/A,8.png
-9,Solution,La Sportiva,6.0,8.5,5.0,N/A,9.png
-10,Theory,La Sportiva,2.0,9.5,3.8,N/A,10.png
-11,Cobra 4:99,La Sportiva,3.5,7.0,6.2,N/A,11.png
-12,Skwama,La Sportiva,4.3,8.0,4.9,N/A,12.png
+6,Python,La Sportiva,3.8,8.3,6.4,N/A,6.png
+7,Cobra,La Sportiva,3.8,6.6,5.5,N/A,7.png
+8,Solution Comp,La Sportiva,4.6,9.0,4.7,N/A,8.png
+9,Solution,La Sportiva,6.0,9.0,5.0,N/A,9.png
+10,Theory,La Sportiva,2.0,9.0,3.8,N/A,10.png
+11,Cobra 4:99,La Sportiva,3.5,9.5,6.2,N/A,11.png
+12,Skwama,La Sportiva,4.3,7.7,4.9,N/A,12.png
 13,TC Pro,La Sportiva,9.2,9.5,6.8,N/A,13.png
 14,Testarossa,La Sportiva,8.5,9.5,10.0,N/A,14.png
-15,Speedster,La Sportiva,2.0,9.8,5.5,N/A,15.png
-16,Miura VS,La Sportiva,7.8,9.2,10.0,N/A,16.png
-17,Finale,La Sportiva,7.0,5.0,5.5,N/A,17.png
+15,Speedster,La Sportiva,2.0,9.5,5.5,N/A,15.png
+16,Miura VS,La Sportiva,7.8,7.7,10.0,N/A,16.png
+17,Finale,La Sportiva,7.0,5.5,5.5,N/A,17.png
 18,Zenit,La Sportiva,7.0,3.5,5.5,N/A,18.png
-19,Mythos,La Sportiva,7.0,3.0,7.8,N/A,19.png
+19,Mythos,La Sportiva,7.0,4.5,7.8,N/A,19.png
 20,Mythos Eco,La Sportiva,6.8,4.2,7.6,N/A,20.png
-21,Cobra Eco,La Sportiva,3.2,5.8,5.5,N/A,21.png
-22,Tarantulace,La Sportiva,8.5,2.0,7.8,N/A,22.png
+21,Cobra Eco,La Sportiva,3.2,6.3,5.5,N/A,21.png
+22,Tarantulace,La Sportiva,8.5,2.2,7.8,N/A,22.png
 23,Tarantula,La Sportiva,7.5,2.0,10.0,N/A,23.png
 24,Aragon,La Sportiva,7.0,2.7,10.0,N/A,24.png
 25,Finale VS,La Sportiva,7.0,4.8,10.0,N/A,25.png
@@ -31,10 +31,10 @@ id,Schuhmodell,Hersteller,Support_X,Performance_Y,Volumen_Z,Toe,Bildpfad
 30,Miura XX,La Sportiva,10.0,10.0,1.0,N/A,30.png
 31,Kubo,La Sportiva,4.5,4.5,5.0,N/A,31.png
 32,Tarantula Boulder,La Sportiva,4.5,1.4,7.0,N/A,32.png
-33,Mantra,La Sportiva,1.0,7.5,4.0,N/A,33.png
-34,Skwama Vegan,La Sportiva,4.3,7.2,6.5,N/A,34.png
-35,Mistral,La Sportiva,5.5,4.0,5.0,N/A,35.png
-36,Otaki,La Sportiva,9.2,7.0,5.5,N/A,36.png
+33,Mantra,La Sportiva,1.0,7.7,4.0,N/A,33.png
+34,Skwama Vegan,La Sportiva,4.3,7.4,6.5,N/A,34.png
+35,Mistral,La Sportiva,5.5,5.0,5.0,N/A,35.png
+36,Otaki,La Sportiva,9.2,7.7,5.5,N/A,36.png
 37,Genius,La Sportiva,4.3,8.2,7.0,N/A,37.png
 38,Mago,Scarpa,5.5,8.5,5.5,Classic,38.png
 39,Booster,Scarpa,5.0,8.5,6.5,Classic,39.png
